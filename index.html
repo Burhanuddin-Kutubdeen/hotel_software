@@ -1,0 +1,37 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Boutique Hotel Booking Tool</title>
+    <meta name="description" content="A desktop application for boutique hotels to manage bookings, check availability, and generate messaging offline." />
+    <link rel="icon" type="image/svg+xml" href="/placeholder.svg" />
+
+    <meta property="og:title" content="Boutique Hotel Booking Tool" />
+    <meta property="og:description" content="A desktop application for boutique hotels to manage bookings, check availability, and generate messaging offline." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/og.jpg" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="/og.jpg" />
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script>
+      // Suppress console errors from browser extensions
+      const originalError = console.error;
+      console.error = function(...args) {
+        const message = args.join(' ');
+        if (message.includes('message channel closed') || 
+            message.includes('listener indicated an asynchronous response') ||
+            message.includes('Extension context invalidated')) {
+          return;
+        }
+        originalError.apply(console, args);
+      };
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
