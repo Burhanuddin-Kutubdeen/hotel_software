@@ -2,6 +2,7 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 
+/*
 // Add global error handler to suppress browser extension errors
 window.addEventListener('error', (event) => {
   // Suppress extension-related errors that don't affect our app
@@ -26,6 +27,7 @@ window.addEventListener('unhandledrejection', (event) => {
     return false;
   }
 });
+*/
 
 // Remove dark mode class addition
 createRoot(document.getElementById("root")!).render(<App />);
