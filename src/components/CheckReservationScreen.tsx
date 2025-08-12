@@ -175,14 +175,16 @@ const CheckReservationScreen: React.FC = () => {
                 className="bg-white/50 border-white/30 hover:bg-white/70 transition-all duration-200"
               />
             </div>
-            <div className="md:col-span-2">
-              <Label htmlFor="date" className="text-sm font-semibold text-slate-700">📅 Select Date</Label>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                className="rounded-md border shadow mx-auto"
-              />
+            <div className="md:col-span-2 flex justify-center">
+              <div className="space-y-2"> {/* Added a div to wrap Label and Calendar */}
+                <Label htmlFor="date" className="text-sm font-semibold text-slate-700">📅 Select Date</Label>
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  className="rounded-md border shadow w-fit"
+                />
+              </div>
             </div>
           </div>
           <div className="flex justify-center pt-4">
