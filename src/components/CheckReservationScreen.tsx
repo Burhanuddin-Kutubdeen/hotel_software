@@ -35,10 +35,9 @@ const CheckReservationScreen: React.FC = () => {
       setSearchCriteria(previousSearchCriteria.searchCriteria);
       setSelectedDate(previousSearchCriteria.selectedDate);
       // Optionally, trigger a search if the user expects it to be re-run
-      // handleSearch(); // Be careful with this, might cause infinite loop if not managed
-      setPreviousSearchCriteria(null); // Clear it after use
+      // handleSearch();
     }
-  }, [previousSearchCriteria, setPreviousSearchCriteria]);
+  }, [previousSearchCriteria]);
 
   const loadHotels = async () => {
     try {
