@@ -182,6 +182,7 @@ Would you like me to hold rooms and take your details?`;
               id="checkin"
               type="date"
               value={checkIn}
+              min={new Date().toISOString().split('T')[0]}
               onChange={(e) => setCheckIn(e.target.value)}
               className="bg-white/50 border-white/30 hover:bg-white/70 transition-all duration-200"
             />
