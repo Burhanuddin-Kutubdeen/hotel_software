@@ -14,7 +14,8 @@ const GuestDetailsScreen: React.FC = () => {
     setCurrentStep,
     setCurrentBooking,
     setLoading,
-    refreshAvailability
+    refreshAvailability,
+    setIsFromCheckReservationFlow
   } = useApp();
 
   const [customerData, setCustomerData] = useState({
@@ -58,6 +59,7 @@ const GuestDetailsScreen: React.FC = () => {
       });
       setCurrentBooking(booking, customer);
       refreshAvailability(); // Trigger availability refresh
+      setIsFromCheckReservationFlow(false); // Add this line
       setCurrentStep('confirmation');
     } catch (error) {
       console.error('Error creating booking:', error);

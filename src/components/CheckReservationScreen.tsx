@@ -13,7 +13,7 @@ import { BookingFormData } from '@/types';
 import { Calendar } from '@/components/ui/calendar';
 import { SelectSingleEventHandler } from 'react-day-picker';
 const CheckReservationScreen: React.FC = () => {
-  const { setCurrentStep, loading, setLoading, setCurrentBooking, setBookingFormData, previousSearchCriteria, setPreviousSearchCriteria } = useApp();
+  const { setCurrentStep, loading, setLoading, setCurrentBooking, setBookingFormData, previousSearchCriteria, setPreviousSearchCriteria, setIsFromCheckReservationFlow } = useApp();
   const [searchCriteria, setSearchCriteria] = useState({
     name: '',
     phone: '',
@@ -104,6 +104,7 @@ const CheckReservationScreen: React.FC = () => {
       searchCriteria: searchCriteria,
       selectedDate: selectedDate,
     });
+    setIsFromCheckReservationFlow(true); // Add this line
 
     // Navigate to confirmation screen
     setCurrentStep('confirmation');

@@ -11,6 +11,10 @@ interface AppContextType {
   previousSearchCriteria: { searchCriteria: any; selectedDate: Date | undefined } | null;
   setPreviousSearchCriteria: (criteria: { searchCriteria: any; selectedDate: Date | undefined } | null) => void;
 
+  // Flow origin
+  isFromCheckReservationFlow: boolean;
+  setIsFromCheckReservationFlow: (isFromCheckReservationFlow: boolean) => void;
+
   // App mode
   isAdminMode: boolean;
   setIsAdminMode: (mode: boolean) => void;
@@ -84,6 +88,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [availabilityRefresh, setAvailabilityRefresh] = useState<number>(0);
   const [previousSearchCriteria, setPreviousSearchCriteria] = useState<{ searchCriteria: any; selectedDate: Date | undefined } | null>(null);
+  const [isFromCheckReservationFlow, setIsFromCheckReservationFlow] = useState<boolean>(false);
 
   // Load hotels on mount
   useEffect(() => {
@@ -172,7 +177,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     availabilityRefresh,
     refreshAvailability,
     previousSearchCriteria,
-    setPreviousSearchCriteria
+    setPreviousSearchCriteria,
+    isFromCheckReservationFlow,
+    setIsFromCheckReservationFlow
   };
 
 
