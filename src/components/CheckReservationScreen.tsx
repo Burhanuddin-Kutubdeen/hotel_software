@@ -42,7 +42,8 @@ const CheckReservationScreen: React.FC = () => {
   const handleSearch = async () => {
     const hasSearchCriteria = searchCriteria.name || searchCriteria.phone || 
                             searchCriteria.email || searchCriteria.confirmationId || 
-                            (searchCriteria.hotelName && searchCriteria.hotelName !== 'all');
+                            (searchCriteria.hotelName && searchCriteria.hotelName !== 'all') ||
+                            selectedDate;
     
     if (!hasSearchCriteria) {
       alert('⚠️ Please enter at least one search criteria');
