@@ -40,6 +40,7 @@ export const bookingService = {
     email?: string;
     confirmationId?: string;
     hotelName?: string;
+    date?: string;
   }): Promise<any[]> {
     // If no criteria provided, return empty array
     const hasCriteria = Object.values(criteria).some(value => value && value.trim());
@@ -103,6 +104,16 @@ export const bookingService = {
       filteredData = filteredData.filter(booking => 
         booking.hotels?.name?.toLowerCase().includes(hotelFilter)
       );
+    }
+
+    if (criteria.date) {
+        const searchDate = new Date(criteria.date);
+        filteredData = filteredData.filter(booking => {
+            const checkInDate = new Date(booking.check_in);
+            const checkOutDate = addDays(new Date(booking.check_in), booking.nights);
+
+            return searchDate >= checkInDate && searchDate <= checkOutDate;
+        });
     }
 
     return filteredData;
