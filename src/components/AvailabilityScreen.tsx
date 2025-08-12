@@ -33,38 +33,38 @@ const AvailabilityScreen: React.FC = () => {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [selectedRoomTypes, setSelectedRoomTypes] = useState<RoomTypeSelection[]>([]);
 
-  useEffect(() => {
-    const loadAvailability = async () => {
-      if (!selectedHotel || !checkIn) return;
+  const loadAvailability = async () => {
+    if (!selectedHotel || !checkIn) return;
 
-      try {
-        setLoading(true);
-        setLoadingProgress(10);
-        
-        const availData = await bookingService.getAvailability(selectedHotel.id, checkIn, nights);
-        setLoadingProgress(70);
-        
-        setAvailability(availData);
+    try {
+      setLoading(true);
+      setLoadingProgress(10);
+      
+      const availData = await bookingService.getAvailability(selectedHotel.id, checkIn, nights);
+      setLoadingProgress(70);
+      
+      setAvailability(availData);
 
-        const dateRange = [];
-        const startDate = new Date(checkIn);
-        for (let i = -5; i < nights + 5; i++) {
-          dateRange.push(format(addDays(startDate, i), 'yyyy-MM-dd'));
-        }
-        setDates(dateRange);
-        setLoadingProgress(100);
-      } catch (error) {
-        console.error('Error loading availability:', error);
-      } finally {
-        setTimeout(() => {
-          setLoading(false);
-          setLoadingProgress(0);
-        }, 200);
+      const dateRange = [];
+      const startDate = new Date(checkIn);
+      for (let i = -5; i < nights + 5; i++) {
+        dateRange.push(format(addDays(startDate, i), 'yyyy-MM-dd'));
       }
-    };
+      setDates(dateRange);
+      setLoadingProgress(100);
+    } catch (error) {
+      console.error('Error loading availability:', error);
+    } finally {
+      setTimeout(() => {
+        setLoading(false);
+        setLoadingProgress(0);
+      }, 200);
+    }
+  };
 
+  useEffect(() => {
     loadAvailability();
-  }, [selectedHotel, checkIn, nights, setLoading, availabilityRefresh]);
+  }, [selectedHotel, checkIn, nights, setLoading, availabilityRefresh, loadAvailability]);
 
   useEffect(() => {
     if (!checkIn) {
@@ -200,6 +200,15 @@ Would you like me to hold rooms and take your details?`;
               onChange={(e) => setNights(parseInt(e.target.value) || 1)}
               className="bg-white/50 border-white/30 hover:bg-white/70 transition-all duration-200"
             />
+          </div>
+          <div className="flex items-end"> {/* New div for the button */}
+            <Button
+              onClick={loadAvailability}
+              className="w-full flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:scale-105 transition-all duration-200 shadow-xl"
+            >
+              <Search className="h-4 w-4" />
+              Check Availability
+            </Button>
           </div>
         </div>
       </div>
