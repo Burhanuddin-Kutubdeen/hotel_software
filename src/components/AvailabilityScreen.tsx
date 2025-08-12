@@ -27,7 +27,7 @@ const AvailabilityScreen: React.FC = () => {
     setLoading,
     setBookingFormData,
     availabilityRefresh,
-    hasRole
+    can
   } = useApp();
   const [availability, setAvailability] = useState<AvailabilityData[]>([]);
   const [dates, setDates] = useState<string[]>([]);
@@ -244,7 +244,7 @@ Would you like me to hold rooms and take your details?`;
             </Button>
             <Button
               onClick={handleContinueToDetails}
-              disabled={selectedRoomTypes.length === 0 || hasRole('viewer')}
+              disabled={selectedRoomTypes.length === 0 || !can('Create Bookings')}
               className="flex items-center gap-2 bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 hover:scale-105 transition-all duration-200 shadow-xl"
             >
               Continue to Guest Details

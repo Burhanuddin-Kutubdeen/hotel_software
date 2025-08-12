@@ -25,6 +25,8 @@ interface AppContextType {
   
   // Helper function to check user role
   hasRole: (role: string) => boolean;
+  // Granular permission check
+  can: (permission: string) => boolean;
 
   // Search criteria
   selectedHotel: Hotel | null;
@@ -89,6 +91,21 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [availabilityRefresh, setAvailabilityRefresh] = useState<number>(0);
   const [previousSearchCriteria, setPreviousSearchCriteria] = useState<{ searchCriteria: any; selectedDate: Date | undefined } | null>(null);
   const [isFromCheckReservationFlow, setIsFromCheckReservationFlow] = useState<boolean>(false);
+
+  const ROLES_PERMISSIONS: Record<string, string[]> = {
+    'admin': [
+        'View Bookings', 'Create Bookings', 'Edit Bookings', 'Delete Bookings',
+        'View Rooms', 'Manage Rooms', 'View Users', 'Manage Users',
+        'View Reports', 'Manage Settings', 'Access Admin Panel'
+    ],
+    'staff': [
+        'View Bookings', 'Create Bookings', 'Edit Bookings',
+        'View Rooms', 'Manage Rooms', 'View Reports'
+    ],
+    'viewer': [
+        'View Bookings', 'View Rooms', 'View Reports'
+    ]
+  };
 
   // Load hotels on mount
   useEffect(() => {

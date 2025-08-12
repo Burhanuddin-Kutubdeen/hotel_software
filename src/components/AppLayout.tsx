@@ -10,7 +10,7 @@ import CheckReservationScreen from './CheckReservationScreen';
 import AdminLayout from './AdminLayout';
 
 const AppLayout: React.FC = () => {
-  const { currentStep, isAdminMode, setIsAdminMode, setCurrentStep, hasRole } = useApp();
+  const { currentStep, isAdminMode, setIsAdminMode, setCurrentStep, hasRole, can } = useApp();
 
   if (isAdminMode) {
     return <AdminLayout />;
@@ -86,7 +86,7 @@ const AppLayout: React.FC = () => {
                 <Search className="h-4 w-4 mr-1" />
                 Check Reservation
               </Button>
-              {hasRole('admin') && ( // Conditional rendering for Admin button
+              {can('Access Admin Panel') && ( // Conditional rendering for Admin button
                 <Button 
                   variant="outline" 
                   size="sm"
