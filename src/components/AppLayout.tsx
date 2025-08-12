@@ -62,7 +62,7 @@ const AppLayout: React.FC = () => {
             <h1 className="text-3xl font-bold bg-gradient-to-r from-teal-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent animate-in slide-in-from-left duration-700">
               ✨ Hotel Booking System
             </h1>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4">
               <div className="px-4 py-2 bg-gradient-to-r from-teal-500/10 to-blue-500/10 rounded-full border border-teal-200/50 backdrop-blur-sm">
                 <span className="text-sm font-semibold text-slate-700">
                   Step {getStepNumber()} {getStepText()}
