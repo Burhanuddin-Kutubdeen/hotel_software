@@ -13,7 +13,7 @@ import { BookingFormData } from '@/types';
 import { Calendar } from '@/components/ui/calendar';
 import { SelectSingleEventHandler } from 'react-day-picker';
 const CheckReservationScreen: React.FC = () => {
-  const { setCurrentStep, loading, setLoading, setCurrentBooking, setBookingFormData } = useApp();
+  const { setCurrentStep, loading, setLoading, setCurrentBooking, setBookingFormData, setPreviousSearchCriteria } = useApp();
   const [searchCriteria, setSearchCriteria] = useState({
     name: '',
     phone: '',
@@ -29,6 +29,16 @@ const CheckReservationScreen: React.FC = () => {
   useEffect(() => {
     loadHotels();
   }, []);
+
+  useEffect(() => {
+    if (previousSearchCriteria) {
+      setSearchCriteria(previousSearchCriteria.searchCriteria);
+      setSelectedDate(previousSearchCriteria.selectedDate);
+      // Optionally, trigger a search if the user expects it to be re-run
+      // handleSearch(); // Be careful with this, might cause infinite loop if not managed
+      setPreviousSearchCriteria(null); // Clear it after use
+    }
+  }, [previousSearchCriteria, setPreviousSearchCriteria]);
 
   const loadHotels = async () => {
     try {
@@ -90,6 +100,12 @@ const CheckReservationScreen: React.FC = () => {
     setCurrentBooking(booking, booking.customers);
     setBookingFormData(bookingFormData);
     
+    // Save current search criteria before navigating
+    setPreviousSearchCriteria({
+      searchCriteria: searchCriteria,
+      selectedDate: selectedDate,
+    });
+
     // Navigate to confirmation screen
     setCurrentStep('confirmation');
   };

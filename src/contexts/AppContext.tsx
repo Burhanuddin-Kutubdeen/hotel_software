@@ -7,6 +7,10 @@ interface AppContextType {
   currentStep: 'availability' | 'details' | 'confirmation' | 'check-reservation';
   setCurrentStep: (step: 'availability' | 'details' | 'confirmation' | 'check-reservation') => void;
 
+  // Previous search criteria
+  previousSearchCriteria: { searchCriteria: any; selectedDate: Date | undefined } | null;
+  setPreviousSearchCriteria: (criteria: { searchCriteria: any; selectedDate: Date | undefined } | null) => void;
+
   // App mode
   isAdminMode: boolean;
   setIsAdminMode: (mode: boolean) => void;
@@ -79,6 +83,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [bookingFormData, setBookingFormData] = useState<BookingFormData | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [availabilityRefresh, setAvailabilityRefresh] = useState<number>(0);
+  const [previousSearchCriteria, setPreviousSearchCriteria] = useState<{ searchCriteria: any; selectedDate: Date | undefined } | null>(null);
 
   // Load hotels on mount
   useEffect(() => {
@@ -165,7 +170,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     loading,
     setLoading,
     availabilityRefresh,
-    refreshAvailability
+    refreshAvailability,
+    previousSearchCriteria,
+    setPreviousSearchCriteria
   };
 
 
