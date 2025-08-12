@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Hotel, RoomType } from '@/types/supabase';
 import { supabase } from '@/lib/supabase';
+import { useApp } from '@/contexts/AppContext';
 
 interface Room {
   id: string;
@@ -18,6 +19,7 @@ interface Room {
 }
 
 const RoomManagement: React.FC = () => {
+  const { hasRole } = useApp();
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -86,76 +88,78 @@ const RoomManagement: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Bulk Add Rooms</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="hotel">Hotel</Label>
-            <Select value={selectedHotel} onValueChange={setSelectedHotel}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a hotel" />
-              </SelectTrigger>
-              <SelectContent>
-                {hotels.map((hotel) => (
-                  <SelectItem key={hotel.id} value={hotel.id}>{hotel.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          {selectedHotel && (
-            <>
-              <div>
-                <Label htmlFor="room_type">Room Type</Label>
-                <Select value={bulkData.room_type_id} onValueChange={(value) => setBulkData({ ...bulkData, room_type_id: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select room type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roomTypes.map((type) => (
-                      <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="grid grid-cols-3 gap-4">
+      {hasRole('admin') && ( // Only admin can bulk add rooms
+        <Card>
+          <CardHeader>
+            <CardTitle>Bulk Add Rooms</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="hotel">Hotel</Label>
+              <Select value={selectedHotel} onValueChange={setSelectedHotel}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a hotel" />
+                </SelectTrigger>
+                <SelectContent>
+                  {hotels.map((hotel) => (
+                    <SelectItem key={hotel.id} value={hotel.id}>{hotel.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {selectedHotel && (
+              <>
                 <div>
-                  <Label htmlFor="prefix">Prefix</Label>
-                  <Input
-                    id="prefix"
-                    value={bulkData.prefix}
-                    onChange={(e) => setBulkData({ ...bulkData, prefix: e.target.value })}
-                    placeholder="e.g., R"
-                  />
+                  <Label htmlFor="room_type">Room Type</Label>
+                  <Select value={bulkData.room_type_id} onValueChange={(value) => setBulkData({ ...bulkData, room_type_id: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select room type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roomTypes.map((type) => (
+                        <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div>
-                  <Label htmlFor="start">Start Number</Label>
-                  <Input
-                    id="start"
-                    type="number"
-                    value={bulkData.start_number}
-                    onChange={(e) => setBulkData({ ...bulkData, start_number: e.target.value })}
-                  />
+                
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="prefix">Prefix</Label>
+                    <Input
+                      id="prefix"
+                      value={bulkData.prefix}
+                      onChange={(e) => setBulkData({ ...bulkData, prefix: e.target.value })}
+                      placeholder="e.g., R"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="start">Start Number</Label>
+                    <Input
+                      id="start"
+                      type="number"
+                      value={bulkData.start_number}
+                      onChange={(e) => setBulkData({ ...bulkData, start_number: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="end">End Number</Label>
+                    <Input
+                      id="end"
+                      type="number"
+                      value={bulkData.end_number}
+                      onChange={(e) => setBulkData({ ...bulkData, end_number: e.target.value })}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="end">End Number</Label>
-                  <Input
-                    id="end"
-                    type="number"
-                    value={bulkData.end_number}
-                    onChange={(e) => setBulkData({ ...bulkData, end_number: e.target.value })}
-                  />
-                </div>
-              </div>
-              
-              <Button onClick={handleBulkAdd}>Add Rooms</Button>
-            </>
-          )}
-        </CardContent>
-      </Card>
+                
+                <Button onClick={handleBulkAdd}>Add Rooms</Button>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-4">
         {rooms.map((room) => (
@@ -166,29 +170,31 @@ const RoomManagement: React.FC = () => {
                   <h3 className="font-semibold">{room.room_number}</h3>
                   <p className="text-sm text-gray-600">{room.hotels?.name} - {room.room_types?.name}</p>
                 </div>
-                <div className="flex gap-2">
-                  <Select value={room.room_type_id} onValueChange={(value) => handleRoomTypeChange(room.id, value)}>
-                    <SelectTrigger className="w-40">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {roomTypes.map((type) => (
-                        <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  
-                  <Select value={room.status} onValueChange={(value) => handleStatusChange(room.id, value)}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                      <SelectItem value="maintenance">Maintenance</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {hasRole('admin') && ( // Only admin can edit room details
+                  <div className="flex gap-2">
+                    <Select value={room.room_type_id} onValueChange={(value) => handleRoomTypeChange(room.id, value)}>
+                      <SelectTrigger className="w-40">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {roomTypes.map((type) => (
+                          <SelectItem key={type.id} value={type.id}>{type.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    <Select value={room.status} onValueChange={(value) => handleStatusChange(room.id, value)}>
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="inactive">Inactive</SelectItem>
+                        <SelectItem value="maintenance">Maintenance</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
