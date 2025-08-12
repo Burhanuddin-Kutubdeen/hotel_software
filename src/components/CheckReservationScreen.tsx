@@ -13,7 +13,7 @@ import { BookingFormData } from '@/types';
 import { Calendar } from '@/components/ui/calendar';
 import { SelectSingleEventHandler } from 'react-day-picker';
 const CheckReservationScreen: React.FC = () => {
-  const { setCurrentStep, loading, setLoading, setCurrentBooking, setBookingFormData, setPreviousSearchCriteria } = useApp();
+  const { setCurrentStep, loading, setLoading, setCurrentBooking, setBookingFormData, previousSearchCriteria, setPreviousSearchCriteria } = useApp();
   const [searchCriteria, setSearchCriteria] = useState({
     name: '',
     phone: '',
