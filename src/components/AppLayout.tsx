@@ -68,6 +68,15 @@ const AppLayout: React.FC = () => {
                   Step {getStepNumber()} {getStepText()}
                 </span>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentStep('availability')}
+                className="bg-white/50 backdrop-blur-sm border-white/30 hover:bg-white/70 hover:scale-105 transition-all duration-200 shadow-lg"
+              >
+                <Search className="h-4 w-4 mr-1" />
+                Check Availability
+              </Button>
               <Button 
                 variant="outline" 
                 size="sm"

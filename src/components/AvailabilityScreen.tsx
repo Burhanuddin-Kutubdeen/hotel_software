@@ -201,15 +201,6 @@ Would you like me to hold rooms and take your details?`;
               className="bg-white/50 border-white/30 hover:bg-white/70 transition-all duration-200"
             />
           </div>
-          <div className="flex items-end"> {/* New div for the button */}
-            <Button
-              onClick={loadAvailability}
-              className="w-full flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:scale-105 transition-all duration-200 shadow-xl"
-            >
-              <Search className="h-4 w-4" />
-              Check Availability
-            </Button>
-          </div>
         </div>
       </div>
 
