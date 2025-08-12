@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { format, addDays } from 'date-fns';
 import { Users, ArrowRight, Search } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
@@ -33,7 +33,7 @@ const AvailabilityScreen: React.FC = () => {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [selectedRoomTypes, setSelectedRoomTypes] = useState<RoomTypeSelection[]>([]);
 
-  const loadAvailability = async () => {
+  const loadAvailability = useCallback(async () => {
     if (!selectedHotel || !checkIn) return;
 
     try {
@@ -60,7 +60,7 @@ const AvailabilityScreen: React.FC = () => {
         setLoadingProgress(0);
       }, 200);
     }
-  };
+  }, [selectedHotel, checkIn, nights, setLoading, setAvailability, setDates, setLoadingProgress]);
 
   useEffect(() => {
     loadAvailability();
