@@ -6,7 +6,7 @@ import { bookingService } from '@/utils/supabase-booking';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea }n from '@/components/ui/textarea';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 const GuestDetailsScreen: React.FC = () => {
   const {
