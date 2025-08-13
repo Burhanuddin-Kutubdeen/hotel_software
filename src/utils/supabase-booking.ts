@@ -137,26 +137,26 @@ export const bookingService = {
     const roomTypes = await this.getRoomTypes(hotelId);
 
     // Fetch actual room counts for each room type
-    const { data: roomCountsData, error: roomCountsError } = await supabase
+    const { data: allRoomsData, error: allRoomsError } = await supabase
       .from('rooms')
-      .select('room_type_id, count', { count: 'exact' })
+      .select('room_type_id')
       .eq('hotel_id', hotelId)
-      .eq('status', 'active')
-      .group('room_type_id');
+      .eq('status', 'active');
 
-    if (roomCountsError) {
-      console.error('Error fetching room counts:', roomCountsError);
-      throw roomCountsError;
+    if (allRoomsError) {
+      console.error('Error fetching all rooms:', allRoomsError);
+      throw allRoomsError;
     }
 
-    console.log('Room Counts Data:', roomCountsData);
+    console.log('All Rooms Data:', allRoomsData);
 
     const roomTypeTotalRooms = new Map<string, number>();
-    (roomCountsData || []).forEach(item => {
-      roomTypeTotalRooms.set(item.room_type_id, item.count);
+    (allRoomsData || []).forEach(room => {
+      const currentCount = roomTypeTotalRooms.get(room.room_type_id) || 0;
+      roomTypeTotalRooms.set(room.room_type_id, currentCount + 1);
     });
 
-    console.log('Room Type Total Rooms Map:', roomTypeTotalRooms);
+    console.log('Room Type Total Rooms Map (JS Grouped):', roomTypeTotalRooms);
     
     // Batch query for all bookings in date range
     const { data: bookingSlots } = await supabase
