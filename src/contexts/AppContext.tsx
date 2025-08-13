@@ -154,6 +154,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     return currentUser?.appUser?.role?.toLowerCase() === role.toLowerCase();
   };
 
+  const toSnakeCase = (str: string) => {
+    return str.toLowerCase().replace(/\s/g, '_');
+  };
+
   const hasPermission = (permission: string) => {
     const userPermissions = currentUser?.appUser?.permissions;
     let userPermissionsArray: string[] = [];
@@ -170,9 +174,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       return false;
     }
 
-    const requestedPermissionLower = permission.toLowerCase();
-    const hasPerm = userPermissionsArray.includes(requestedPermissionLower);
-    console.log(`Checking permission: ${permission}, User permissions: ${userPermissions}, Parsed: ${userPermissionsArray}, Requested: ${requestedPermissionLower}, Result: ${hasPerm}`);
+    const requestedPermissionSnakeCase = toSnakeCase(permission); // Convert to snake_case
+    const hasPerm = userPermissionsArray.includes(requestedPermissionSnakeCase);
+    console.log(`Checking permission: ${permission}, User permissions: ${userPermissions}, Parsed: ${userPermissionsArray}, Requested: ${requestedPermissionSnakeCase}, Result: ${hasPerm}`);
     return hasPerm;
   };
 
