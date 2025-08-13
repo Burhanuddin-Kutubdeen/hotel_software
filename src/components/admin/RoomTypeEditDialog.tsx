@@ -90,7 +90,6 @@ const RoomTypeEditDialog: React.FC<RoomTypeEditDialogProps> = ({
             description,
             base_price: basePrice,
             max_occupancy: maxOccupancy,
-            rooms_count: endRoomNumber - startRoomNumber + 1,
           })
           .select()
           .single();

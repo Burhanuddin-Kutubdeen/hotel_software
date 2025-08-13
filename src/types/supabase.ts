@@ -17,7 +17,7 @@ export interface RoomType {
   description?: string;
   base_price: number;
   max_occupancy: number;
-  rooms_count: number;
+  rooms_count?: number;
   created_at: string;
   updated_at: string;
 }
