@@ -170,7 +170,7 @@ Would you like me to hold rooms and take your details?`;
               </SelectTrigger>
               <SelectContent>
                 {hotels.map(hotel => (
-                  <SelectItem key={hotel.id} value={hotel.id}>{hotel.name} ({hotel.roomCount || 0} rooms)</SelectItem>
+                  <SelectItem key={hotel.id} value={hotel.id}>{hotel.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
