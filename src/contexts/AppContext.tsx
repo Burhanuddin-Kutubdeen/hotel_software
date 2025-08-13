@@ -77,6 +77,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [currentStep, setCurrentStep] = useState<'availability' | 'details' | 'confirmation' | 'check-reservation'>('availability');
   const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    console.log("AppContext: currentUser changed", currentUser);
+  }, [currentUser]);
   const [selectedHotel, setSelectedHotel] = useState<Hotel | null>(null);
   const [selectedRoomType, setSelectedRoomType] = useState<RoomType | null>(null);
   const [checkIn, setCheckIn] = useState<string>('');
@@ -151,7 +155,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   };
 
   const hasPermission = (permission: string) => {
-    return currentUser?.appUser?.permissions?.includes(permission);
+    const hasPerm = currentUser?.appUser?.permissions?.includes(permission);
+    console.log(`Checking permission: ${permission}, User permissions: ${currentUser?.appUser?.permissions}, Result: ${hasPerm}`);
+    return hasPerm;
   };
 
   const value: AppContextType = {

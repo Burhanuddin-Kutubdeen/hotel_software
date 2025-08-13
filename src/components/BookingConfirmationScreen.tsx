@@ -192,6 +192,8 @@ Confirmation ID: ${currentBooking.confirmation_id || currentBooking.id.slice(0, 
 
       {/* Actions */}
       <div className="flex justify-center gap-4"> {/* Added gap-4 for spacing */}
+        {console.log("BookingConfirmationScreen: hasPermission('Edit Bookings')", hasPermission('Edit Bookings'))}
+        {console.log("BookingConfirmationScreen: hasPermission('Delete Bookings')", hasPermission('Delete Bookings'))}
         {hasPermission('Edit Bookings') && (
           <Button
             onClick={handleEdit}
