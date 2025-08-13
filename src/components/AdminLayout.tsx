@@ -41,7 +41,7 @@ const AdminLayout: React.FC = () => {
       case 'calendar':
         return <YearCalendar onNavigate={handleNavigate} />;
       case 'users':
-        return hasRole('ADMIN') ? <UserManagement /> : <HotelManagement />;
+        return hasRole('admin') || hasRole('staff') || hasRole('viewer') ? <UserManagement /> : <HotelManagement />;
       case 'roles':
         return hasRole('ADMIN') ? <RoleManagement /> : <HotelManagement />;
       default:
