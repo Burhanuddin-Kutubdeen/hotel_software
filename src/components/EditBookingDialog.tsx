@@ -16,6 +16,7 @@ interface EditBookingDialogProps {
 }
 
 const EditBookingDialog: React.FC<EditBookingDialogProps> = ({ booking, isOpen, onClose, onSave }) => {
+  console.log("EditBookingDialog: Received booking prop", booking);
   const { setLoading } = useApp();
   const [checkIn, setCheckIn] = useState<Date | undefined>();
   const [nights, setNights] = useState(0);
@@ -26,6 +27,7 @@ const EditBookingDialog: React.FC<EditBookingDialogProps> = ({ booking, isOpen, 
       setCheckIn(parseISO(booking.check_in));
       setNights(booking.nights);
       setRoomTypes(booking.booking_rooms.map((br: any) => ({ roomType: br.room_types, quantity: br.quantity })));
+      console.log("EditBookingDialog: State after useEffect", { checkIn: parseISO(booking.check_in), nights: booking.nights, roomTypes: booking.booking_rooms.map((br: any) => ({ roomType: br.room_types, quantity: br.quantity })) });
     }
   }, [booking]);
 
@@ -36,6 +38,13 @@ const EditBookingDialog: React.FC<EditBookingDialogProps> = ({ booking, isOpen, 
       alert("Please ensure check-in date is selected and nights is greater than 0.");
       return;
     }
+
+    const updateData = {
+      checkIn: format(checkIn, 'yyyy-MM-dd'),
+      nights,
+      roomTypes,
+    };
+    console.log("EditBookingDialog: Data to be sent to updateBooking", updateData);
 
     try {
       setLoading(true);
