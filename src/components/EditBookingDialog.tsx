@@ -30,8 +30,23 @@ const EditBookingDialog: React.FC<EditBookingDialogProps> = ({ booking, isOpen, 
     if (booking) {
       setCheckIn(parseISO(booking.check_in));
       setNights(booking.nights);
-      setRoomTypes(booking.booking_rooms.map((br: any) => ({ roomType: br.room_types, quantity: br.quantity })));
-      setSelectedHotelId(booking.hotel.id);
+
+      if (booking.booking_rooms) {
+        setRoomTypes(booking.booking_rooms.map((br: any) => ({
+          roomType: br.room_types,
+          quantity: br.quantity
+        })));
+      } else {
+        console.warn("EditBookingDialog: booking.booking_rooms is undefined.", booking);
+        setRoomTypes([]);
+      }
+
+      if (booking.hotel && booking.hotel.id) {
+        setSelectedHotelId(booking.hotel.id);
+      } else {
+        console.warn("EditBookingDialog: booking.hotel or booking.hotel.id is undefined.", booking);
+        setSelectedHotelId('');
+      }
 
       // Fetch all hotels
       const fetchAllHotels = async () => {
