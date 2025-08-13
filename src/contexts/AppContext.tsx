@@ -155,8 +155,15 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   };
 
   const hasPermission = (permission: string) => {
-    const hasPerm = currentUser?.appUser?.permissions?.includes(permission);
-    console.log(`Checking permission: ${permission}, User permissions: ${currentUser?.appUser?.permissions}, Result: ${hasPerm}`);
+    const userPermissionsString = currentUser?.appUser?.permissions;
+    if (!userPermissionsString) {
+      console.log(`Checking permission: ${permission}, User permissions: undefined, Result: false`);
+      return false;
+    }
+    const userPermissionsArray = userPermissionsString.split(',').map((p: string) => p.trim().toLowerCase());
+    const requestedPermissionLower = permission.toLowerCase();
+    const hasPerm = userPermissionsArray.includes(requestedPermissionLower);
+    console.log(`Checking permission: ${permission}, User permissions: ${userPermissionsString}, Parsed: ${userPermissionsArray}, Requested: ${requestedPermissionLower}, Result: ${hasPerm}`);
     return hasPerm;
   };
 
