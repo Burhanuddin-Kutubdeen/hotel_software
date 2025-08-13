@@ -7,11 +7,16 @@ export const bookingService = {
   async getHotels(): Promise<Hotel[]> {
     const { data, error } = await supabase
       .from('hotels')
-      .select('*')
+      .select('*, rooms!left(count)') // Select hotels and count of associated rooms
       .order('name');
     
     if (error) throw error;
-    return data || [];
+
+    // Map the data to include roomCount
+    return (data || []).map((hotel: any) => ({ // Cast hotel to any to access rooms property
+      ...hotel,
+      roomCount: hotel.rooms?.[0]?.count || 0 // Access the count property
+    }));
   },
 
   // Get room types for a hotel

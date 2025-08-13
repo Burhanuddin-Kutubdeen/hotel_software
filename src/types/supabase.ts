@@ -6,6 +6,7 @@ export interface Hotel {
   email?: string;
   currency: string;
   timezone: string;
+  roomCount?: number; // Add this
   created_at: string;
   updated_at: string;
 }
