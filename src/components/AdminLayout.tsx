@@ -4,11 +4,12 @@ import { useApp } from '@/contexts/AppContext';
 import HotelManagement from './admin/HotelManagement';
 import RoomTypeManagement from './admin/RoomTypeManagement';
 import RoomManagement from './admin/RoomManagement';
+import RoomsManagement from './admin/RoomsManagement'; // New import
 import YearCalendar from './admin/YearCalendar';
 import UserManagement from './admin/UserManagement';
 import RoleManagement from './admin/RoleManagement';
 
-type AdminView = 'hotels' | 'roomTypes' | 'rooms' | 'calendar' | 'users' | 'roles';
+type AdminView = 'hotels' | 'rooms' | 'calendar' | 'users' | 'roles'; // Updated type
 
 const AdminLayout: React.FC = () => {
   const [currentView, setCurrentView] = useState<AdminView>('hotels');
@@ -17,8 +18,6 @@ const AdminLayout: React.FC = () => {
   const handleNavigate = (section: string) => {
     if (section === 'rooms') {
       setCurrentView('rooms');
-    } else if (section === 'roomTypes') {
-      setCurrentView('roomTypes');
     } else if (section === 'hotels') {
       setCurrentView('hotels');
     } else if (section === 'calendar') {
@@ -34,10 +33,8 @@ const AdminLayout: React.FC = () => {
     switch (currentView) {
       case 'hotels':
         return <HotelManagement />;
-      case 'roomTypes':
-        return <RoomTypeManagement />;
       case 'rooms':
-        return <RoomManagement />;
+        return <RoomsManagement />;
       case 'calendar':
         return <YearCalendar onNavigate={handleNavigate} />;
       case 'users':
@@ -61,12 +58,6 @@ const AdminLayout: React.FC = () => {
                 onClick={() => setCurrentView('hotels')}
               >
                 Hotels
-              </Button>
-              <Button 
-                variant={currentView === 'roomTypes' ? 'default' : 'outline'}
-                onClick={() => setCurrentView('roomTypes')}
-              >
-                Room Types
               </Button>
               <Button 
                 variant={currentView === 'rooms' ? 'default' : 'outline'}
