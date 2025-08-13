@@ -149,10 +149,14 @@ export const bookingService = {
       throw roomCountsError;
     }
 
+    console.log('Room Counts Data:', roomCountsData);
+
     const roomTypeTotalRooms = new Map<string, number>();
     (roomCountsData || []).forEach(item => {
       roomTypeTotalRooms.set(item.room_type_id, item.count);
     });
+
+    console.log('Room Type Total Rooms Map:', roomTypeTotalRooms);
     
     // Batch query for all bookings in date range
     const { data: bookingSlots } = await supabase
@@ -162,11 +166,15 @@ export const bookingService = {
       .in('date', dates)
       .not('booking_id', 'is', null);
 
+    console.log('Booking Slots:', bookingSlots);
+
     // Batch query for all room blocks in date range
     const { data: roomBlocks } = await supabase
       .from('room_blocks')
       .select('date, rooms!inner(room_type_id)')
       .in('date', dates);
+
+    console.log('Room Blocks:', roomBlocks);
 
     const availability: AvailabilityData[] = [];
 
@@ -186,6 +194,8 @@ export const bookingService = {
         const totalOccupied = bookingCount + blockCount;
         const available = Math.max(0, totalRoomsForType - totalOccupied);
         
+        console.log(`Date: ${date}, RoomType: ${roomType.name}, TotalRooms: ${totalRoomsForType}, Booked: ${bookingCount}, Blocked: ${blockCount}, Available: ${available}`);
+
         let status: 'available' | 'low' | 'sold-out' = 'available';
         if (available === 0) status = 'sold-out';
         else if (available <= Math.ceil(totalRoomsForType * 0.3)) status = 'low';
@@ -331,11 +341,12 @@ export const bookingService = {
           });
         
         if (error) {
-          console.log('Slot insert error (ignored):', error);
+          console.error('Slot insert error:', error);
+          throw error; // Propagate the error
         }
       } catch (error) {
-        // Ignore conflicts, continue with booking
-        console.log('Slot conflict ignored:', error);
+        console.error('Error allocating slot:', error);
+        throw error; // Propagate the error
       }
     }
   }
