@@ -28,7 +28,8 @@ export const bookingService = {
     return (data || []).map(roomType => ({
       id: roomType.id,
       hotelId: roomType.hotel_id,
-      name: roomType.name
+      name: roomType.name,
+      basePrice: roomType.base_price
     }));
   },
 

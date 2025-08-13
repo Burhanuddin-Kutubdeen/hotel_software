@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format, addDays } from 'date-fns';
 import { ArrowLeft, Check, User, Calendar, DollarSign, Loader2 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
@@ -6,7 +6,7 @@ import { bookingService } from '@/utils/supabase-booking';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { Textarea }n from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 const GuestDetailsScreen: React.FC = () => {
   const {
@@ -31,6 +31,19 @@ const GuestDetailsScreen: React.FC = () => {
     totalPrice: '',
     notes: ''
   });
+
+  useEffect(() => {
+    if (bookingFormData) {
+      const calculatedPrice = bookingFormData.roomTypes.reduce((sum, selection) => {
+        return sum + (selection.roomType.basePrice * selection.quantity);
+      }, 0) * bookingFormData.nights;
+
+      // Only set the calculated price if the user hasn't manually entered a value
+      if (!pricingData.totalPrice) {
+        setPricingData(prev => ({ ...prev, totalPrice: calculatedPrice.toFixed(2) }));
+      }
+    }
+  }, [bookingFormData, pricingData.totalPrice]); // Depend on bookingFormData and pricingData.totalPrice
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
