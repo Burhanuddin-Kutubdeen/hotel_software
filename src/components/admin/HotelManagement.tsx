@@ -46,9 +46,9 @@ const HotelManagement: React.FC = () => {
       setEditingHotel(null);
       setFormData({ name: '', address: '', description: '', phone: '', email: '' });
       await loadHotels();
-    } catch (error) {
+    } catch (error: any) { // Cast error to any to access message property
       console.error('Error saving hotel:', error);
-      alert('Error saving hotel. Please try again.');
+      alert(`Error saving hotel. Please try again. Details: ${error.message || error}`);
     }
   };
 
