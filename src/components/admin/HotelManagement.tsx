@@ -23,7 +23,7 @@ const HotelManagement: React.FC = () => {
   }, []);
 
   const loadHotels = async () => {
-    const { data } = await supabase.from('hotels').select('*');
+    const { data } = await supabase.from('hotels').select('*').eq('is_active', true);
     if (data) setHotels(data);
   };
 
@@ -39,7 +39,7 @@ const HotelManagement: React.FC = () => {
         const { error } = await supabase.from('hotels').update(formData).eq('id', editingHotel.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('hotels').insert(formData);
+        const { error } = await supabase.from('hotels').insert({ ...formData, is_active: true });
         if (error) throw error;
       }
       
@@ -64,7 +64,11 @@ const HotelManagement: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    await supabase.from('hotels').delete().eq('id', id);
+    // Add confirmation dialog
+    if (!window.confirm('Are you sure you want to deactivate this hotel? Deactivated hotels will not appear in booking forms but their historical data will be preserved.')) {
+      return;
+    }
+    await supabase.from('hotels').update({ is_active: false }).eq('id', id);
     loadHotels();
   };
 

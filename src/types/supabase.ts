@@ -6,6 +6,7 @@ export interface Hotel {
   email?: string;
   currency: string;
   timezone: string;
+  is_active?: boolean; // Add this
   created_at: string;
   updated_at: string;
 }
@@ -16,6 +17,7 @@ export interface RoomType {
   name: string;
   rooms_count: number;
   base_price?: number;
+  is_active?: boolean; // Add this
   created_at: string;
   updated_at: string;
 }
