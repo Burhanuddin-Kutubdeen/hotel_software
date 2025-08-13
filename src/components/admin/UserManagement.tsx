@@ -111,7 +111,10 @@ const UserManagement: React.FC = () => {
         .update({ is_active: !currentStatus })
         .eq('id', userId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase update error in toggleUserStatus:", error);
+        throw error;
+      }
 
       toast({
         title: "Success",
