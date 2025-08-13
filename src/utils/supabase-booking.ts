@@ -28,8 +28,7 @@ export const bookingService = {
     return (data || []).map(roomType => ({
       id: roomType.id,
       hotelId: roomType.hotel_id,
-      name: roomType.name,
-      roomsCount: roomType.rooms_count
+      name: roomType.name
     }));
   },
 
@@ -136,6 +135,24 @@ export const bookingService = {
     }
 
     const roomTypes = await this.getRoomTypes(hotelId);
+
+    // Fetch actual room counts for each room type
+    const { data: roomCountsData, error: roomCountsError } = await supabase
+      .from('rooms')
+      .select('room_type_id, count', { count: 'exact' })
+      .eq('hotel_id', hotelId)
+      .eq('status', 'active')
+      .group('room_type_id');
+
+    if (roomCountsError) {
+      console.error('Error fetching room counts:', roomCountsError);
+      throw roomCountsError;
+    }
+
+    const roomTypeTotalRooms = new Map<string, number>();
+    (roomCountsData || []).forEach(item => {
+      roomTypeTotalRooms.set(item.room_type_id, item.count);
+    });
     
     // Batch query for all bookings in date range
     const { data: bookingSlots } = await supabase
@@ -154,6 +171,7 @@ export const bookingService = {
     const availability: AvailabilityData[] = [];
 
     for (const roomType of roomTypes) {
+      const totalRoomsForType = roomTypeTotalRooms.get(roomType.id) || 0;
       for (const date of dates) {
         // Count bookings for this room type and date
         const bookingCount = (bookingSlots || []).filter(slot => 
@@ -166,17 +184,17 @@ export const bookingService = {
         ).length;
 
         const totalOccupied = bookingCount + blockCount;
-        const available = Math.max(0, roomType.roomsCount - totalOccupied);
+        const available = Math.max(0, totalRoomsForType - totalOccupied);
         
         let status: 'available' | 'low' | 'sold-out' = 'available';
         if (available === 0) status = 'sold-out';
-        else if (available <= Math.ceil(roomType.roomsCount * 0.3)) status = 'low';
+        else if (available <= Math.ceil(totalRoomsForType * 0.3)) status = 'low';
 
         availability.push({
           date,
           roomTypeId: roomType.id,
           available,
-          total: roomType.roomsCount,
+          total: totalRoomsForType,
           status
         });
       }

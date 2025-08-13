@@ -8,7 +8,6 @@ export interface RoomType {
   id: string;
   hotelId: string;
   name: string;
-  roomsCount: number;
 }
 
 export interface InventorySlot {
