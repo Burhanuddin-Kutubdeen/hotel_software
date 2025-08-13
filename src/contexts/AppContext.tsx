@@ -155,15 +155,24 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   };
 
   const hasPermission = (permission: string) => {
-    const userPermissionsString = currentUser?.appUser?.permissions;
-    if (!userPermissionsString) {
-      console.log(`Checking permission: ${permission}, User permissions: undefined, Result: false`);
+    const userPermissions = currentUser?.appUser?.permissions;
+    let userPermissionsArray: string[] = [];
+
+    if (Array.isArray(userPermissions)) {
+      // If it's already an array, use it directly
+      userPermissionsArray = userPermissions.map((p: string) => p.trim().toLowerCase());
+    } else if (typeof userPermissions === 'string') {
+      // If it's a comma-separated string, split it
+      userPermissionsArray = userPermissions.split(',').map((p: string) => p.trim().toLowerCase());
+    } else {
+      // If it's neither, then no permissions are present
+      console.log(`Checking permission: ${permission}, User permissions: ${userPermissions}, Result: false (Invalid type)`);
       return false;
     }
-    const userPermissionsArray = userPermissionsString.split(',').map((p: string) => p.trim().toLowerCase());
+
     const requestedPermissionLower = permission.toLowerCase();
     const hasPerm = userPermissionsArray.includes(requestedPermissionLower);
-    console.log(`Checking permission: ${permission}, User permissions: ${userPermissionsString}, Parsed: ${userPermissionsArray}, Requested: ${requestedPermissionLower}, Result: ${hasPerm}`);
+    console.log(`Checking permission: ${permission}, User permissions: ${userPermissions}, Parsed: ${userPermissionsArray}, Requested: ${requestedPermissionLower}, Result: ${hasPerm}`);
     return hasPerm;
   };
 
