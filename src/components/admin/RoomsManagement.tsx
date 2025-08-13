@@ -36,8 +36,15 @@ const RoomsManagement: React.FC = () => {
   }, []);
 
   const loadRooms = useCallback(async () => {
-    const { data } = await supabase.from('rooms').select('*, room_types(name), hotels(name)').neq('status', 'inactive');
-    if (data) setRooms(data);
+    const { data, error } = await supabase.from('rooms').select('*, room_types(name), hotels(name)').neq('status', 'inactive');
+    if (error) {
+      console.error("Error loading rooms:", error);
+      return;
+    }
+    if (data) {
+      console.log("Loaded rooms:", data);
+      setRooms(data);
+    }
   }, []);
 
   useEffect(() => {
