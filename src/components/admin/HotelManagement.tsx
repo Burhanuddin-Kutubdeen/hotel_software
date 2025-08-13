@@ -35,11 +35,19 @@ const HotelManagement: React.FC = () => {
         return;
       }
 
+      const payload = {
+        name: formData.name,
+        address: formData.address,
+        description: formData.description,
+        phone: formData.phone,
+        email: formData.email
+      };
+
       if (editingHotel) {
-        const { error } = await supabase.from('hotels').update(formData).eq('id', editingHotel.id);
+        const { error } = await supabase.from('hotels').update(payload).eq('id', editingHotel.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('hotels').insert(formData);
+        const { error } = await supabase.from('hotels').insert(payload);
         if (error) throw error;
       }
       

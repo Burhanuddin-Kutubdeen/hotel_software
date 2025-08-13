@@ -25,6 +25,8 @@ interface AppContextType {
   
   // Helper function to check user role
   hasRole: (role: string) => boolean;
+  // Granular permission check
+  can: (permission: string) => boolean;
 
   // Search criteria
   selectedHotel: Hotel | null;
@@ -90,6 +92,22 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [previousSearchCriteria, setPreviousSearchCriteria] = useState<{ searchCriteria: any; selectedDate: Date | undefined } | null>(null);
   const [isFromCheckReservationFlow, setIsFromCheckReservationFlow] = useState<boolean>(false);
 
+  const ROLES_PERMISSIONS: Record<string, string[]> = {
+    'admin': [
+        'View Bookings', 'Create Bookings', 'Edit Bookings', 'Delete Bookings',
+        'View Rooms', 'Manage Rooms', 'View Users', 'Manage Users',
+        'View Reports', 'Manage Settings', 'Access Admin Panel'
+    ],
+    'staff': [
+        'View Bookings', 'Create Bookings', 'Edit Bookings',
+        'View Rooms', 'Manage Rooms', 'View Reports'
+    ],
+    'viewer': [
+        'View Bookings', 'View Rooms', 'View Reports'
+    ]
+  };
+
+
   // Load hotels on mount
   useEffect(() => {
     const loadHotels = async () => {
@@ -145,6 +163,15 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     setAvailabilityRefresh(prev => prev + 1);
   };
   
+  const can = (permission: string): boolean => {
+    if (!currentUser || !currentUser.appUser || !currentUser.appUser.role) {
+      return false; // No user or no role, cannot perform any action
+    }
+    const userRole = currentUser.appUser.role.toLowerCase();
+    const permissionsForRole = ROLES_PERMISSIONS[userRole] || [];
+    return permissionsForRole.includes(permission);
+  };
+
   const hasRole = (role: string) => {
     return currentUser?.appUser?.role?.toLowerCase() === role.toLowerCase();
   };
@@ -157,6 +184,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     currentUser,
     setCurrentUser,
     hasRole,
+    can,
     selectedHotel,
     setSelectedHotel,
     selectedRoomType,

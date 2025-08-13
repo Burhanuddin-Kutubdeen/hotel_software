@@ -14,8 +14,20 @@ export interface RoomType {
   id: string;
   hotel_id: string;
   name: string;
+  description?: string;
+  base_price: number;
+  max_occupancy: number;
   rooms_count: number;
-  base_price?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Room {
+  id: string;
+  hotel_id: string;
+  room_type_id: string;
+  room_number: string;
+  status: string;
   created_at: string;
   updated_at: string;
 }

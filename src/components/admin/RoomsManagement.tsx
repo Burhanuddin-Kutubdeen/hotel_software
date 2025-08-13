@@ -1,22 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Hotel, RoomType } from '@/types/supabase'; // Assuming Room interface is also in supabase.ts or defined here
+import { Hotel, RoomType, Room } from '@/types/supabase';
 import { supabase } from '@/lib/supabase';
-import { useApp } from '@/contexts/AppContext'; // For hasRole
+import { useApp } from '@/contexts/AppContext';
+import RoomTypeEditDialog from './RoomTypeEditDialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
-interface Room { // Define Room interface if not in types/supabase.ts
-  id: string;
-  room_number: string;
-  room_type_id: string;
-  hotel_id: string;
-  status: string;
-  room_types?: { name: string };
-  hotels?: { name: string };
-}
 
 const RoomsManagement: React.FC = () => {
   const { hasRole } = useApp();
@@ -24,33 +16,88 @@ const RoomsManagement: React.FC = () => {
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [selectedHotel, setSelectedHotel] = useState<string>('');
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingRoomType, setEditingRoomType] = useState<RoomType | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deletingRoomType, setDeletingRoomType] = useState<RoomType | null>(null);
 
-  useEffect(() => {
-    loadHotels();
-    loadRooms(); // Load all rooms initially
-  }, []);
-
-  useEffect(() => {
-    if (selectedHotel) {
-      loadRoomTypes(selectedHotel);
-    } else {
-      setRoomTypes([]); // Clear room types if no hotel selected
-    }
-  }, [selectedHotel]);
 
   const loadHotels = async () => {
     const { data } = await supabase.from('hotels').select('*');
     if (data) setHotels(data);
   };
 
-  const loadRoomTypes = async (hotelId: string) => {
-    const { data } = await supabase.from('room_types').select('*, hotels(name)').eq('hotel_id', hotelId);
+  const loadRoomTypes = useCallback(async (hotelId: string) => {
+    const { data } = await supabase.from('room_types').select('*').eq('hotel_id', hotelId).order('name');
     if (data) setRoomTypes(data);
-  };
+  }, []);
 
-  const loadRooms = async () => {
+  const loadRooms = useCallback(async () => {
     const { data } = await supabase.from('rooms').select('*, room_types(name), hotels(name)').neq('status', 'inactive');
     if (data) setRooms(data);
+  }, []);
+
+  useEffect(() => {
+    loadHotels();
+    loadRooms();
+  }, [loadRooms]);
+
+  useEffect(() => {
+    if (selectedHotel) {
+      loadRoomTypes(selectedHotel);
+    } else {
+      setRoomTypes([]);
+    }
+  }, [selectedHotel, loadRoomTypes]);
+
+  const handleAddRoomType = () => {
+    setEditingRoomType(null);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleEditRoomType = (roomType: RoomType) => {
+    setEditingRoomType(roomType);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDeleteRoomType = (roomType: RoomType) => {
+    setDeletingRoomType(roomType);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingRoomType) return;
+    // First, delete all rooms associated with the room type
+    const { error: deleteRoomsError } = await supabase.from('rooms').delete().eq('room_type_id', deletingRoomType.id);
+    if (deleteRoomsError) {
+      console.error('Error deleting rooms:', deleteRoomsError);
+      // Handle error (e.g., show toast)
+      return;
+    }
+
+    // Then, delete the room type itself
+    const { error: deleteRoomTypeError } = await supabase.from('room_types').delete().eq('id', deletingRoomType.id);
+    if (deleteRoomTypeError) {
+      console.error('Error deleting room type:', deleteRoomTypeError);
+      // Handle error
+    } else {
+      // Refresh list
+      loadRoomTypes(selectedHotel);
+      loadRooms();
+    }
+    setIsDeleteDialogOpen(false);
+    setDeletingRoomType(null);
+  };
+
+
+  const handleDialogClose = () => {
+    setIsEditDialogOpen(false);
+    setEditingRoomType(null);
+    // Refresh data after closing dialog
+    if (selectedHotel) {
+      loadRoomTypes(selectedHotel);
+      loadRooms();
+    }
   };
 
   return (
@@ -76,8 +123,12 @@ const RoomsManagement: React.FC = () => {
 
           {selectedHotel && (
             <div className="space-y-4">
-              <h3>Room Types for {hotels.find(h => h.id === selectedHotel)?.name}</h3>
-              {/* Room Type List and CRUD will go here */}
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold">Room Types for {hotels.find(h => h.id === selectedHotel)?.name}</h3>
+                {hasRole('admin') && (
+                  <Button onClick={handleAddRoomType}>Add Room Type</Button>
+                )}
+              </div>
               {roomTypes.map(roomType => (
                 <Card key={roomType.id}>
                   <CardContent className="pt-6">
@@ -89,30 +140,20 @@ const RoomsManagement: React.FC = () => {
                       </div>
                       {hasRole('admin') && (
                         <div className="flex gap-2">
-                          <Button size="sm" variant="outline">Edit Type</Button>
-                          <Button size="sm" variant="destructive">Delete Type</Button>
+                          <Button size="sm" variant="outline" onClick={() => handleEditRoomType(roomType)}>Edit Type</Button>
+                          <Button size="sm" variant="destructive" onClick={() => handleDeleteRoomType(roomType)}>Delete Type</Button>
                         </div>
                       )}
                     </div>
-                    {/* Individual Rooms for this Room Type will go here */}
                     <div className="mt-4 border-t pt-4">
-                      <h5>Individual Rooms ({rooms.filter(r => r.room_type_id === roomType.id).length})</h5>
-                      {hasRole('admin') && (
-                        <Button size="sm" className="mt-2">Add Room</Button>
-                      )}
-                      <div className="grid grid-cols-2 gap-2 mt-2">
+                      <h5 className="font-semibold">Individual Rooms ({rooms.filter(r => r.room_type_id === roomType.id).length})</h5>
+                      {/* Add/Edit individual rooms can be a future enhancement */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 mt-2">
                         {rooms.filter(r => r.room_type_id === roomType.id).map(room => (
                           <Card key={room.id}>
-                            <CardContent className="pt-4">
-                              <div className="flex justify-between items-center">
-                                <span>{room.room_number} ({room.status})</span>
-                                {hasRole('admin') && (
-                                  <div className="flex gap-2">
-                                    <Button size="sm" variant="outline">Edit Room</Button>
-                                    <Button size="sm" variant="destructive">Delete Room</Button>
-                                  </div>
-                                )}
-                              </div>
+                            <CardContent className="p-2 text-center">
+                              <span className="text-sm font-medium">{room.room_number}</span>
+                              <span className="text-xs block text-gray-500">{room.status}</span>
                             </CardContent>
                           </Card>
                         ))}
@@ -125,6 +166,31 @@ const RoomsManagement: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {isEditDialogOpen && (
+        <RoomTypeEditDialog
+          isOpen={isEditDialogOpen}
+          onClose={handleDialogClose}
+          hotelId={selectedHotel}
+          roomType={editingRoomType}
+        />
+      )}
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the room type
+              and all associated rooms.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
