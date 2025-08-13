@@ -350,5 +350,106 @@ export const bookingService = {
         throw error; // Propagate the error
       }
     }
+  },
+
+  // Delete a booking
+  async deleteBooking(bookingId: string): Promise<void> {
+    // 1. Delete associated booking_rooms entries
+    const { error: bookingRoomsError } = await supabase
+      .from('booking_rooms')
+      .delete()
+      .eq('booking_id', bookingId);
+
+    if (bookingRoomsError) {
+      console.error('Error deleting booking rooms:', bookingRoomsError);
+      throw new Error(`Failed to delete booking rooms: ${bookingRoomsError.message}`);
+    }
+
+    // 2. Delete associated room_type_inventory_slots entries
+    const { error: inventorySlotsError } = await supabase
+      .from('room_type_inventory_slots')
+      .delete()
+      .eq('booking_id', bookingId);
+
+    if (inventorySlotsError) {
+      console.error('Error deleting inventory slots:', inventorySlotsError);
+      throw new Error(`Failed to delete inventory slots: ${inventorySlotsError.message}`);
+    }
+
+    // 3. Delete the booking itself
+    const { error: bookingError } = await supabase
+      .from('bookings')
+      .delete()
+      .eq('id', bookingId);
+
+    if (bookingError) {
+      console.error('Error deleting booking:', bookingError);
+      throw new Error(`Failed to delete booking: ${bookingError.message}`);
+    }
+  },
+
+  // Update a booking
+  async updateBooking(bookingId: string, updates: {
+    checkIn?: string;
+    nights?: number;
+    roomTypes?: Array<{ roomType: { id: string; name: string }; quantity: number }>;
+  }): Promise<void> {
+    const { error: bookingError } = await supabase
+      .from('bookings')
+      .update({
+        check_in: updates.checkIn,
+        nights: updates.nights,
+        check_out: updates.checkIn && updates.nights ? format(addDays(new Date(updates.checkIn), updates.nights), 'yyyy-MM-dd') : undefined,
+      })
+      .eq('id', bookingId);
+
+    if (bookingError) {
+      console.error('Error updating booking:', bookingError);
+      throw new Error(`Failed to update booking: ${bookingError.message}`);
+    }
+
+    if (updates.roomTypes) {
+      // 1. Delete old booking_rooms entries
+      const { error: deleteBookingRoomsError } = await supabase
+        .from('booking_rooms')
+        .delete()
+        .eq('booking_id', bookingId);
+
+      if (deleteBookingRoomsError) {
+        throw deleteBookingRoomsError;
+      }
+
+      // 2. Insert new booking_rooms entries
+      const bookingRoomsData = updates.roomTypes.map(rt => ({
+        booking_id: bookingId,
+        room_type_id: rt.roomType.id,
+        quantity: rt.quantity,
+      }));
+
+      const { error: insertBookingRoomsError } = await supabase
+        .from('booking_rooms')
+        .insert(bookingRoomsData);
+
+      if (insertBookingRoomsError) {
+        throw insertBookingRoomsError;
+      }
+    }
+
+    // 3. Re-allocate inventory slots
+    const { data: booking } = await supabase.from('bookings').select('hotel_id, check_in, nights').eq('id', bookingId).single();
+    if (booking && updates.roomTypes) {
+        // Delete old slots
+        const { error: deleteSlotsError } = await supabase.from('room_type_inventory_slots').delete().eq('booking_id', bookingId);
+        if (deleteSlotsError) {
+            throw deleteSlotsError;
+        }
+
+        // Allocate new slots
+        for (const selection of updates.roomTypes) {
+            for (let i = 0; i < selection.quantity; i++) {
+                await this.allocateSlots(booking.hotel_id, selection.roomType.id, booking.check_in, booking.nights, bookingId);
+            }
+        }
+    }
   }
 };

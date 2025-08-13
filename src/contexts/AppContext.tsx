@@ -25,6 +25,7 @@ interface AppContextType {
   
   // Helper function to check user role
   hasRole: (role: string) => boolean;
+  hasPermission: (permission: string) => boolean;
 
   // Search criteria
   selectedHotel: Hotel | null;
@@ -149,6 +150,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     return currentUser?.appUser?.role?.toLowerCase() === role.toLowerCase();
   };
 
+  const hasPermission = (permission: string) => {
+    return currentUser?.appUser?.permissions?.includes(permission);
+  };
+
   const value: AppContextType = {
     currentStep,
     setCurrentStep,
@@ -157,6 +162,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     currentUser,
     setCurrentUser,
     hasRole,
+    hasPermission,
     selectedHotel,
     setSelectedHotel,
     selectedRoomType,
