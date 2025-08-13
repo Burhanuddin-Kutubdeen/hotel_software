@@ -53,11 +53,11 @@ export const bookingService = {
       .select(`
         *,
         customers (*),
-        hotels (name),
+        hotels (id, name),
         booking_rooms (
           quantity,
           room_type_id,
-          room_types (name)
+          room_types (id, name)
         )
       `);
 
