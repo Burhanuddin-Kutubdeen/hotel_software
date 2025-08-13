@@ -17,6 +17,7 @@ interface EditBookingDialogProps {
 }
 
 const EditBookingDialog: React.FC<EditBookingDialogProps> = ({ booking, isOpen, onClose, onSave }) => {
+  console.log("EditBookingDialog: Component rendered. isOpen:", isOpen, "booking:", booking);
   const { setLoading } = useApp();
   const [checkIn, setCheckIn] = useState<Date | undefined>();
   const [nights, setNights] = useState(0);
@@ -37,6 +38,7 @@ const EditBookingDialog: React.FC<EditBookingDialogProps> = ({ booking, isOpen, 
         try {
           const hotelsData = await bookingService.getHotels();
           setAllHotels(hotelsData);
+          console.log("EditBookingDialog: Fetched all hotels:", hotelsData);
         } catch (error) {
           console.error('Error fetching all hotels:', error);
         }
@@ -54,6 +56,7 @@ const EditBookingDialog: React.FC<EditBookingDialogProps> = ({ booking, isOpen, 
           setAllRoomTypes(roomTypesData);
           // Clear selected room types if hotel changes
           setRoomTypes([]);
+          console.log("EditBookingDialog: Fetched room types for hotel", selectedHotelId, ":", roomTypesData);
         } catch (error) {
           console.error('Error fetching all room types:', error);
         }
@@ -62,7 +65,12 @@ const EditBookingDialog: React.FC<EditBookingDialogProps> = ({ booking, isOpen, 
     }
   }, [selectedHotelId]);
 
-  if (!booking) return null;
+  if (!booking) {
+    console.log("EditBookingDialog: Booking is null, returning null.");
+    return null;
+  }
+
+  console.log("EditBookingDialog: Rendering with state - checkIn:", checkIn, "nights:", nights, "roomTypes:", roomTypes, "selectedHotelId:", selectedHotelId, "allHotels:", allHotels, "allRoomTypes:", allRoomTypes);
 
   const handleSaveChanges = async () => {
     if (!checkIn || nights <= 0) {
