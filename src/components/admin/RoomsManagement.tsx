@@ -7,6 +7,7 @@ import { Hotel, RoomType, Room } from '@/types/supabase';
 import { supabase } from '@/lib/supabase';
 import { useApp } from '@/contexts/AppContext';
 import RoomTypeEditDialog from './RoomTypeEditDialog';
+import RoomEditDialog from './RoomEditDialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 
@@ -16,10 +17,12 @@ const RoomsManagement: React.FC = () => {
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [selectedHotel, setSelectedHotel] = useState<string>('');
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isRoomTypeEditDialogOpen, setIsRoomTypeEditDialogOpen] = useState(false);
   const [editingRoomType, setEditingRoomType] = useState<RoomType | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isRoomTypeDeleteDialogOpen, setIsRoomTypeDeleteDialogOpen] = useState(false);
   const [deletingRoomType, setDeletingRoomType] = useState<RoomType | null>(null);
+  const [isRoomEditDialogOpen, setIsRoomEditDialogOpen] = useState(false);
+  const [editingRoom, setEditingRoom] = useState<Room | null>(null);
 
 
   const loadHotels = async () => {
@@ -52,20 +55,20 @@ const RoomsManagement: React.FC = () => {
 
   const handleAddRoomType = () => {
     setEditingRoomType(null);
-    setIsEditDialogOpen(true);
+    setIsRoomTypeEditDialogOpen(true);
   };
 
   const handleEditRoomType = (roomType: RoomType) => {
     setEditingRoomType(roomType);
-    setIsEditDialogOpen(true);
+    setIsRoomTypeEditDialogOpen(true);
   };
 
   const handleDeleteRoomType = (roomType: RoomType) => {
     setDeletingRoomType(roomType);
-    setIsDeleteDialogOpen(true);
+    setIsRoomTypeDeleteDialogOpen(true);
   };
 
-  const confirmDelete = async () => {
+  const confirmDeleteRoomType = async () => {
     if (!deletingRoomType) return;
     // First, delete all rooms associated with the room type
     const { error: deleteRoomsError } = await supabase.from('rooms').delete().eq('room_type_id', deletingRoomType.id);
@@ -85,19 +88,31 @@ const RoomsManagement: React.FC = () => {
       loadRoomTypes(selectedHotel);
       loadRooms();
     }
-    setIsDeleteDialogOpen(false);
+    setIsRoomTypeDeleteDialogOpen(false);
     setDeletingRoomType(null);
   };
 
 
-  const handleDialogClose = () => {
-    setIsEditDialogOpen(false);
+  const handleRoomTypeDialogClose = () => {
+    setIsRoomTypeEditDialogOpen(false);
     setEditingRoomType(null);
     // Refresh data after closing dialog
     if (selectedHotel) {
       loadRoomTypes(selectedHotel);
       loadRooms();
     }
+  };
+
+  const handleEditRoom = (room: Room) => {
+    setEditingRoom(room);
+    setIsRoomEditDialogOpen(true);
+  };
+
+  const handleRoomDialogClose = () => {
+    setIsRoomEditDialogOpen(false);
+    setEditingRoom(null);
+    // Refresh rooms after closing dialog
+    loadRooms();
   };
 
   return (
@@ -147,13 +162,15 @@ const RoomsManagement: React.FC = () => {
                     </div>
                     <div className="mt-4 border-t pt-4">
                       <h5 className="font-semibold">Individual Rooms ({rooms.filter(r => r.room_type_id === roomType.id).length})</h5>
-                      {/* Add/Edit individual rooms can be a future enhancement */}
                       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 mt-2">
                         {rooms.filter(r => r.room_type_id === roomType.id).map(room => (
                           <Card key={room.id}>
                             <CardContent className="p-2 text-center">
                               <span className="text-sm font-medium">{room.room_number}</span>
                               <span className="text-xs block text-gray-500">{room.status}</span>
+                              {hasRole('admin') && (
+                                <Button size="sm" variant="outline" className="mt-2" onClick={() => handleEditRoom(room)}>Edit</Button>
+                              )}
                             </CardContent>
                           </Card>
                         ))}
@@ -167,16 +184,24 @@ const RoomsManagement: React.FC = () => {
         </CardContent>
       </Card>
 
-      {isEditDialogOpen && (
+      {isRoomTypeEditDialogOpen && (
         <RoomTypeEditDialog
-          isOpen={isEditDialogOpen}
-          onClose={handleDialogClose}
+          isOpen={isRoomTypeEditDialogOpen}
+          onClose={handleRoomTypeDialogClose}
           hotelId={selectedHotel}
           roomType={editingRoomType}
         />
       )}
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      {isRoomEditDialogOpen && editingRoom && (
+        <RoomEditDialog
+          isOpen={isRoomEditDialogOpen}
+          onClose={handleRoomDialogClose}
+          room={editingRoom}
+        />
+      )}
+
+      <AlertDialog open={isRoomTypeDeleteDialogOpen} onOpenChange={setIsRoomTypeDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
@@ -186,8 +211,8 @@ const RoomsManagement: React.FC = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+            <AlertDialogCancel onClick={() => setIsRoomTypeDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteRoomType}>Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RoomType } from '@/types/supabase';
 import { supabase } from '@/lib/supabase';
+import { useToast } from '@/components/ui/use-toast';
 
 interface RoomTypeEditDialogProps {
   isOpen: boolean;
@@ -35,6 +36,7 @@ const RoomTypeEditDialog: React.FC<RoomTypeEditDialogProps> = ({
   const [startRoomNumber, setStartRoomNumber] = useState<number>(101);
   const [endRoomNumber, setEndRoomNumber] = useState<number>(101);
   const [isSaving, setIsSaving] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (roomType) {
@@ -74,6 +76,10 @@ const RoomTypeEditDialog: React.FC<RoomTypeEditDialogProps> = ({
           })
           .eq('id', roomType.id);
         if (error) throw error;
+        toast({
+          title: "Room Type Updated",
+          description: `Room type '${name}' has been updated.`, 
+        });
       } else {
         // Create new room type and bulk create rooms
         const { data: newRoomType, error: roomTypeError } = await supabase
@@ -105,12 +111,20 @@ const RoomTypeEditDialog: React.FC<RoomTypeEditDialogProps> = ({
             .from('rooms')
             .insert(roomsToCreate);
           if (roomsError) throw roomsError;
+          toast({
+            title: "Room Type Created",
+            description: `Room type '${name}' and ${roomsToCreate.length} rooms have been created.`, 
+          });
         }
       }
       onClose();
     } catch (error) {
       console.error('Error saving room type:', error);
-      // Handle error (e.g., show a toast notification)
+      toast({
+        title: "Error",
+        description: `Failed to save room type: ${error.message}`, 
+        variant: "destructive",
+      });
     } finally {
       setIsSaving(false);
     }
