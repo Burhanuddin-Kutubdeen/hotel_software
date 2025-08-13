@@ -158,7 +158,7 @@ const RoomsManagement: React.FC = () => {
                       <div>
                         <h4 className="font-semibold">{roomType.name}</h4>
                         <p className="text-sm text-gray-600">{roomType.description}</p>
-                        <p className="text-sm text-gray-500">${roomType.base_price}/night • {roomType.max_occupancy} guests • {roomType.rooms_count} rooms</p>
+                        <p className="text-sm text-gray-500">${roomType.base_price}/night • {roomType.max_occupancy} guests • {rooms.filter(r => r.room_type_id === roomType.id).length} rooms</p>
                       </div>
                       {hasRole('admin') && (
                         <div className="flex gap-2">
