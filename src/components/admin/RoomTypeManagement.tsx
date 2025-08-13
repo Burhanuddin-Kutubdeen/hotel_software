@@ -78,6 +78,29 @@ const RoomTypeManagement: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
+    // Check for associated bookings in room_type_inventory_slots
+    const { count: inventoryCount, error: inventoryError } = await supabase
+      .from('room_type_inventory_slots')
+      .select('id', { count: 'exact' })
+      .eq('room_type_id', id)
+      .not('booking_id', 'is', null); // Only count slots that are part of a booking
+
+    if (inventoryError) {
+      console.error('Error checking for associated inventory slots:', inventoryError);
+      alert('Error checking for associated inventory slots. Please try again.');
+      return;
+    }
+
+    if (inventoryCount && inventoryCount > 0) {
+      alert('Cannot delete room type: There are existing bookings associated with this room type. Please delete or reassign bookings first.');
+      return;
+    }
+
+    // Confirm deletion
+    if (!window.confirm('Are you sure you want to delete this room type? This action cannot be undone and will also delete all associated rooms.')) {
+      return;
+    }
+
     await supabase.from('room_types').delete().eq('id', id);
     loadRoomTypes();
   };

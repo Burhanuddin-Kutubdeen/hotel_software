@@ -64,6 +64,28 @@ const HotelManagement: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
+    // Check for associated bookings
+    const { count: bookingCount, error: bookingError } = await supabase
+      .from('bookings')
+      .select('id', { count: 'exact' })
+      .eq('hotel_id', id);
+
+    if (bookingError) {
+      console.error('Error checking for associated bookings:', bookingError);
+      alert('Error checking for associated bookings. Please try again.');
+      return;
+    }
+
+    if (bookingCount && bookingCount > 0) {
+      alert('Cannot delete hotel: There are existing bookings associated with this hotel. Please delete or reassign bookings first.');
+      return;
+    }
+
+    // Confirm deletion
+    if (!window.confirm('Are you sure you want to delete this hotel? This action cannot be undone and will also delete all associated room types and rooms.')) {
+      return;
+    }
+
     await supabase.from('hotels').delete().eq('id', id);
     loadHotels();
   };
