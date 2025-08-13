@@ -393,14 +393,15 @@ export const bookingService = {
     checkIn?: string;
     nights?: number;
     roomTypes?: Array<{ roomType: { id: string; name: string }; quantity: number }>;
+    hotelId?: string;
   }): Promise<void> {
-    console.log("updateBooking: Received bookingId", bookingId, "and updates", updates);
     const { error: bookingError } = await supabase
       .from('bookings')
       .update({
         check_in: updates.checkIn,
         nights: updates.nights,
         check_out: updates.checkIn && updates.nights ? format(addDays(new Date(updates.checkIn), updates.nights), 'yyyy-MM-dd') : undefined,
+        hotel_id: updates.hotelId, // Update hotel_id if provided
       })
       .eq('id', bookingId);
 
@@ -408,10 +409,8 @@ export const bookingService = {
       console.error('Error updating booking details:', bookingError);
       throw new Error(`Failed to update booking details: ${bookingError.message}`);
     }
-    console.log("updateBooking: Booking details updated successfully.");
 
     if (updates.roomTypes) {
-      console.log("updateBooking: Updating room types.");
       // 1. Delete old booking_rooms entries
       const { error: deleteBookingRoomsError } = await supabase
         .from('booking_rooms')
@@ -422,7 +421,6 @@ export const bookingService = {
         console.error('Error deleting old booking rooms:', deleteBookingRoomsError);
         throw deleteBookingRoomsError;
       }
-      console.log("updateBooking: Old booking rooms deleted.");
 
       // 2. Insert new booking_rooms entries
       const bookingRoomsData = updates.roomTypes.map(rt => ({
@@ -439,11 +437,9 @@ export const bookingService = {
         console.error('Error inserting new booking rooms:', insertBookingRoomsError);
         throw insertBookingRoomsError;
       }
-      console.log("updateBooking: New booking rooms inserted.");
     }
 
     // 3. Re-allocate inventory slots
-    console.log("updateBooking: Re-allocating inventory slots.");
     const { data: booking, error: fetchBookingError } = await supabase.from('bookings').select('hotel_id, check_in, nights').eq('id', bookingId).single();
     if (fetchBookingError) {
       console.error('Error fetching booking for slot re-allocation:', fetchBookingError);
@@ -457,15 +453,14 @@ export const bookingService = {
             console.error('Error deleting old inventory slots:', deleteSlotsError);
             throw deleteSlotsError;
         }
-        console.log("updateBooking: Old inventory slots deleted.");
 
         // Allocate new slots
+        const currentHotelId = updates.hotelId || booking.hotel_id; // Use new hotelId if provided, else existing
         for (const selection of updates.roomTypes) {
             for (let i = 0; i < selection.quantity; i++) {
-                await this.allocateSlots(booking.hotel_id, selection.roomType.id, booking.check_in, booking.nights, bookingId);
+                await this.allocateSlots(currentHotelId, selection.roomType.id, booking.check_in, booking.nights, bookingId);
             }
         }
-        console.log("updateBooking: New inventory slots allocated.");
     }
   }
 };
