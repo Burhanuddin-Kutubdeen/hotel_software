@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { format, addDays } from 'date-fns';
 import { Users, ArrowRight, Search } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
@@ -26,45 +26,46 @@ const AvailabilityScreen: React.FC = () => {
     loading,
     setLoading,
     setBookingFormData,
-    availabilityRefresh
+    availabilityRefresh,
+    hasRole
   } = useApp();
   const [availability, setAvailability] = useState<AvailabilityData[]>([]);
   const [dates, setDates] = useState<string[]>([]);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [selectedRoomTypes, setSelectedRoomTypes] = useState<RoomTypeSelection[]>([]);
 
-  useEffect(() => {
-    const loadAvailability = async () => {
-      if (!selectedHotel || !checkIn) return;
+  const loadAvailability = useCallback(async () => {
+    if (!selectedHotel || !checkIn) return;
 
-      try {
-        setLoading(true);
-        setLoadingProgress(10);
-        
-        const availData = await bookingService.getAvailability(selectedHotel.id, checkIn, nights);
-        setLoadingProgress(70);
-        
-        setAvailability(availData);
+    try {
+      setLoading(true);
+      setLoadingProgress(10);
+      
+      const availData = await bookingService.getAvailability(selectedHotel.id, checkIn, nights);
+      setLoadingProgress(70);
+      
+      setAvailability(availData);
 
-        const dateRange = [];
-        const startDate = new Date(checkIn);
-        for (let i = -5; i < nights + 5; i++) {
-          dateRange.push(format(addDays(startDate, i), 'yyyy-MM-dd'));
-        }
-        setDates(dateRange);
-        setLoadingProgress(100);
-      } catch (error) {
-        console.error('Error loading availability:', error);
-      } finally {
-        setTimeout(() => {
-          setLoading(false);
-          setLoadingProgress(0);
-        }, 200);
+      const dateRange = [];
+      const startDate = new Date(checkIn);
+      for (let i = -5; i < nights + 5; i++) {
+        dateRange.push(format(addDays(startDate, i), 'yyyy-MM-dd'));
       }
-    };
+      setDates(dateRange);
+      setLoadingProgress(100);
+    } catch (error) {
+      console.error('Error loading availability:', error);
+    } finally {
+      setTimeout(() => {
+        setLoading(false);
+        setLoadingProgress(0);
+      }, 200);
+    }
+  }, [selectedHotel, checkIn, nights, setLoading, setAvailability, setDates, setLoadingProgress]);
 
+  useEffect(() => {
     loadAvailability();
-  }, [selectedHotel, checkIn, nights, setLoading, availabilityRefresh]);
+  }, [selectedHotel, checkIn, nights, setLoading, availabilityRefresh, loadAvailability]);
 
   useEffect(() => {
     if (!checkIn) {
@@ -182,6 +183,7 @@ Would you like me to hold rooms and take your details?`;
               id="checkin"
               type="date"
               value={checkIn}
+              min={new Date().toISOString().split('T')[0]}
               onChange={(e) => setCheckIn(e.target.value)}
               className="bg-white/50 border-white/30 hover:bg-white/70 transition-all duration-200"
             />
@@ -242,7 +244,7 @@ Would you like me to hold rooms and take your details?`;
             </Button>
             <Button
               onClick={handleContinueToDetails}
-              disabled={selectedRoomTypes.length === 0}
+              disabled={selectedRoomTypes.length === 0 || hasRole('viewer')}
               className="flex items-center gap-2 bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 hover:scale-105 transition-all duration-200 shadow-xl"
             >
               Continue to Guest Details

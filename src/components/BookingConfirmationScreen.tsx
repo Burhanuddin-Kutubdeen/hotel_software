@@ -10,7 +10,9 @@ const BookingConfirmationScreen: React.FC = () => {
     bookingFormData,
     currentBooking,
     currentCustomer,
-    setCurrentStep
+    setCurrentStep,
+    previousSearchCriteria,
+    isFromCheckReservationFlow
   } = useApp();
 
   if (!currentBooking || !currentCustomer || !bookingFormData) {
@@ -161,7 +163,16 @@ Confirmation ID: ${currentBooking.confirmation_id || currentBooking.id.slice(0, 
       </Card>
 
       {/* Actions */}
-      <div className="flex justify-center">
+      <div className="flex justify-center gap-4"> {/* Added gap-4 for spacing */}
+        {isFromCheckReservationFlow && ( // Conditional rendering
+          <Button
+            onClick={() => setCurrentStep('check-reservation')} // New button
+            className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 hover:scale-105 transition-all duration-200 shadow-xl text-lg px-8 py-3"
+          >
+            <ArrowLeft className="h-5 w-5" />
+            Back to Search Results
+          </Button>
+        )}
         <Button
           onClick={handleNewBooking}
           className="flex items-center gap-2 bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 hover:scale-105 transition-all duration-200 shadow-xl text-lg px-8 py-3"

@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { UserEditDialog } from './UserEditDialog';
+import { useApp } from '@/contexts/AppContext';
 
 interface User {
   id: string;
@@ -21,6 +22,7 @@ interface User {
 }
 
 const UserManagement: React.FC = () => {
+  const { hasRole } = useApp();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -140,9 +142,11 @@ const UserManagement: React.FC = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">User Management</h2>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>Add User</Button>
-          </DialogTrigger>
+          {hasRole('admin') && ( // Only admin can add users
+            <DialogTrigger asChild>
+              <Button>Add User</Button>
+            </DialogTrigger>
+          )}
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Add New User</DialogTitle>
@@ -209,7 +213,7 @@ const UserManagement: React.FC = () => {
                 <TableHead>Role</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
-                <TableHead>Actions</TableHead>
+                {hasRole('admin') && <TableHead>Actions</TableHead>} {/* Only admin sees Actions header */}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -228,24 +232,26 @@ const UserManagement: React.FC = () => {
                     </Badge>
                   </TableCell>
                   <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleEdit(user)}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => toggleUserStatus(user.id, user.is_active)}
-                      >
-                        {user.is_active ? 'Deactivate' : 'Activate'}
-                      </Button>
-                    </div>
-                  </TableCell>
+                  {hasRole('admin') && ( // Only admin sees Actions column
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEdit(user)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => toggleUserStatus(user.id, user.is_active)}
+                        >
+                          {user.is_active ? 'Deactivate' : 'Activate'}
+                        </Button>
+                      </div>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>

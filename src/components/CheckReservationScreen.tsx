@@ -10,8 +10,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BookingFormData } from '@/types';
+import { Calendar } from '@/components/ui/calendar';
+import { SelectSingleEventHandler } from 'react-day-picker';
 const CheckReservationScreen: React.FC = () => {
-  const { setCurrentStep, loading, setLoading, setCurrentBooking, setBookingFormData } = useApp();
+  const { setCurrentStep, loading, setLoading, setCurrentBooking, setBookingFormData, previousSearchCriteria, setPreviousSearchCriteria, setIsFromCheckReservationFlow } = useApp();
   const [searchCriteria, setSearchCriteria] = useState({
     name: '',
     phone: '',
@@ -22,10 +24,20 @@ const CheckReservationScreen: React.FC = () => {
   const [hotels, setHotels] = useState<any[]>([]);
   const [bookings, setBookings] = useState<any[]>([]);
   const [searched, setSearched] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
     loadHotels();
   }, []);
+
+  useEffect(() => {
+    if (previousSearchCriteria) {
+      setSearchCriteria(previousSearchCriteria.searchCriteria);
+      setSelectedDate(previousSearchCriteria.selectedDate);
+      // Optionally, trigger a search if the user expects it to be re-run
+      // handleSearch();
+    }
+  }, [previousSearchCriteria]);
 
   const loadHotels = async () => {
     try {
@@ -39,7 +51,8 @@ const CheckReservationScreen: React.FC = () => {
   const handleSearch = async () => {
     const hasSearchCriteria = searchCriteria.name || searchCriteria.phone || 
                             searchCriteria.email || searchCriteria.confirmationId || 
-                            (searchCriteria.hotelName && searchCriteria.hotelName !== 'all');
+                            (searchCriteria.hotelName && searchCriteria.hotelName !== 'all') ||
+                            selectedDate;
     
     if (!hasSearchCriteria) {
       alert('⚠️ Please enter at least one search criteria');
@@ -48,7 +61,10 @@ const CheckReservationScreen: React.FC = () => {
 
     try {
       setLoading(true);
-      const results = await bookingService.searchBookings(searchCriteria);
+      const results = await bookingService.searchBookings({
+        ...searchCriteria,
+        date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : undefined,
+      });
       setBookings(results);
       setSearched(true);
     } catch (error) {
@@ -83,6 +99,13 @@ const CheckReservationScreen: React.FC = () => {
     setCurrentBooking(booking, booking.customers);
     setBookingFormData(bookingFormData);
     
+    // Save current search criteria before navigating
+    setPreviousSearchCriteria({
+      searchCriteria: searchCriteria,
+      selectedDate: selectedDate,
+    });
+    setIsFromCheckReservationFlow(true); // Add this line
+
     // Navigate to confirmation screen
     setCurrentStep('confirmation');
   };
@@ -168,6 +191,17 @@ const CheckReservationScreen: React.FC = () => {
                 placeholder="Enter confirmation ID"
                 className="bg-white/50 border-white/30 hover:bg-white/70 transition-all duration-200"
               />
+            </div>
+            <div className="md:col-span-2 flex justify-center">
+              <div className="space-y-2"> {/* Added a div to wrap Label and Calendar */}
+                <Label htmlFor="date" className="text-sm font-semibold text-slate-700">📅 Select Date</Label>
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  className="rounded-md border shadow w-fit"
+                />
+              </div>
             </div>
           </div>
           <div className="flex justify-center pt-4">
