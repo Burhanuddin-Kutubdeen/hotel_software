@@ -42,7 +42,7 @@ const RoomTypeManagement: React.FC = () => {
   };
 
   const loadRoomTypes = async () => {
-    const { data } = await supabase.from('room_types').select('*, hotels(name)').eq('is_active', true);
+    const { data } = await supabase.from('room_types').select('*, hotels(name)');
     if (data) setRoomTypes(data);
   };
 
@@ -57,7 +57,7 @@ const RoomTypeManagement: React.FC = () => {
     if (editingRoomType) {
       await supabase.from('room_types').update(payload).eq('id', editingRoomType.id);
     } else {
-      await supabase.from('room_types').insert({ ...payload, is_active: true });
+      await supabase.from('room_types').insert(payload);
     }
     
     setEditingRoomType(null);
@@ -78,11 +78,7 @@ const RoomTypeManagement: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    // Add confirmation dialog
-    if (!window.confirm('Are you sure you want to deactivate this room type? Deactivated room types will not appear in booking forms but their historical data will be preserved.')) {
-      return;
-    }
-    await supabase.from('room_types').update({ is_active: false }).eq('id', id);
+    await supabase.from('room_types').delete().eq('id', id);
     loadRoomTypes();
   };
 

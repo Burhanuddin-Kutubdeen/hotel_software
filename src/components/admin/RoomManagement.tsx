@@ -53,7 +53,7 @@ const RoomManagement: React.FC = () => {
   };
 
   const loadRooms = async () => {
-    const { data } = await supabase.from('rooms').select('*, room_types(name), hotels(name)').neq('status', 'inactive'); // Filter by active rooms
+    const { data } = await supabase.from('rooms').select('*, room_types(name), hotels(name)');
     if (data) setRooms(data);
   };
 
@@ -193,17 +193,6 @@ const RoomManagement: React.FC = () => {
                         <SelectItem value="maintenance">Maintenance</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => {
-                        if (window.confirm('Are you sure you want to deactivate this room? Deactivated rooms will not be available for new bookings.')) {
-                          handleStatusChange(room.id, 'inactive');
-                        }
-                      }}
-                    >
-                      Delete
-                    </Button>
                   </div>
                 )}
               </div>
