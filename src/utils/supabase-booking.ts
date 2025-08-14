@@ -127,6 +127,7 @@ export const bookingService = {
 
   // Fallback method with original logic but some optimizations
   async getAvailabilityFallback(hotelId: string, checkIn: string, nights: number): Promise<AvailabilityData[]> {
+    console.log(`getAvailabilityFallback: Fetching availability for hotelId: ${hotelId}, checkIn: ${checkIn}, nights: ${nights}`);
     const dates = [];
     const startDate = new Date(checkIn);
     
@@ -134,8 +135,10 @@ export const bookingService = {
     for (let i = -5; i < nights + 5; i++) {
       dates.push(format(addDays(startDate, i), 'yyyy-MM-dd'));
     }
+    console.log('getAvailabilityFallback: Dates to check:', dates);
 
     const roomTypes = await this.getRoomTypes(hotelId);
+    console.log('getAvailabilityFallback: Room types for hotel:', roomTypes);
 
     // Fetch actual room counts for each room type
     const { data: allRoomsData, error: allRoomsError } = await supabase
@@ -149,7 +152,7 @@ export const bookingService = {
       throw allRoomsError;
     }
 
-    console.log('All Rooms Data:', allRoomsData);
+    console.log('getAvailabilityFallback: All Rooms Data (raw):', allRoomsData);
 
     const roomTypeTotalRooms = new Map<string, number>();
     (allRoomsData || []).forEach(room => {
@@ -157,7 +160,7 @@ export const bookingService = {
       roomTypeTotalRooms.set(room.room_type_id, currentCount + 1);
     });
 
-    console.log('Room Type Total Rooms Map (JS Grouped):', roomTypeTotalRooms);
+    console.log('getAvailabilityFallback: Room Type Total Rooms Map:', roomTypeTotalRooms);
     
     // Batch query for all bookings in date range
     const { data: bookingSlots } = await supabase
@@ -167,7 +170,7 @@ export const bookingService = {
       .in('date', dates)
       .not('booking_id', 'is', null);
 
-    console.log('Booking Slots:', bookingSlots);
+    console.log('getAvailabilityFallback: Booking Slots (raw):', bookingSlots);
 
     // Batch query for all room blocks in date range
     const { data: roomBlocks } = await supabase
@@ -175,7 +178,7 @@ export const bookingService = {
       .select('date, rooms!inner(room_type_id)')
       .in('date', dates);
 
-    console.log('Room Blocks:', roomBlocks);
+    console.log('getAvailabilityFallback: Room Blocks (raw):', roomBlocks);
 
     const availability: AvailabilityData[] = [];
 
@@ -195,7 +198,7 @@ export const bookingService = {
         const totalOccupied = bookingCount + blockCount;
         const available = Math.max(0, totalRoomsForType - totalOccupied);
         
-        console.log(`Date: ${date}, RoomType: ${roomType.name}, TotalRooms: ${totalRoomsForType}, Booked: ${bookingCount}, Blocked: ${blockCount}, Available: ${available}`);
+        console.log(`getAvailabilityFallback: Date: ${date}, RoomType: ${roomType.name}, TotalRooms: ${totalRoomsForType}, Booked: ${bookingCount}, Blocked: ${blockCount}, Available: ${available}`);
 
         let status: 'available' | 'low' | 'sold-out' = 'available';
         if (available === 0) status = 'sold-out';
@@ -210,7 +213,7 @@ export const bookingService = {
         });
       }
     }
-
+    console.log('getAvailabilityFallback: Final availability data:', availability);
     return availability;
   },
 
