@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { format, parseISO } from 'date-fns';
 import { bookingService } from '@/utils/supabase-booking';
 import { useApp } from '@/contexts/AppContext';
+import { AvailabilityData } from '@/types/supabase';
 
 interface EditBookingDialogProps {
   booking: any;
@@ -25,6 +26,7 @@ const EditBookingDialog: React.FC<EditBookingDialogProps> = ({ booking, isOpen, 
   const [allRoomTypes, setAllRoomTypes] = useState<any[]>([]);
   const [selectedHotelId, setSelectedHotelId] = useState<string>('');
   const [allHotels, setAllHotels] = useState<any[]>([]);
+  const [availabilityData, setAvailabilityData] = useState<AvailabilityData[]>([]);
 
   useEffect(() => {
     if (booking) {
@@ -80,6 +82,24 @@ const EditBookingDialog: React.FC<EditBookingDialogProps> = ({ booking, isOpen, 
     }
   }, [selectedHotelId]);
 
+  useEffect(() => {
+    if (selectedHotelId && checkIn && nights > 0) {
+      const fetchAvailability = async () => {
+        try {
+          setLoading(true);
+          const data = await bookingService.getAvailability(selectedHotelId, format(checkIn, 'yyyy-MM-dd'), nights);
+          setAvailabilityData(data);
+          console.log("EditBookingDialog: Fetched availability data:", data);
+        } catch (error) {
+          console.error('Error fetching availability:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchAvailability();
+    }
+  }, [selectedHotelId, checkIn, nights]);
+
   if (!booking) {
     console.log("EditBookingDialog: Booking is null, returning null.");
     return null;
@@ -91,6 +111,15 @@ const EditBookingDialog: React.FC<EditBookingDialogProps> = ({ booking, isOpen, 
     if (!checkIn || nights <= 0) {
       alert("Please ensure check-in date is selected and nights is greater than 0.");
       return;
+    }
+
+    // Validate room type quantities against availability
+    for (const selectedRoom of roomTypes) {
+      const available = availabilityData.find(ad => ad.roomTypeId === selectedRoom.roomType.id)?.available;
+      if (available !== undefined && selectedRoom.quantity > available) {
+        alert(`Error: ${selectedRoom.roomType.name} has only ${available} rooms available. You selected ${selectedRoom.quantity}.`);
+        return;
+      }
     }
 
     try {
@@ -148,20 +177,23 @@ const EditBookingDialog: React.FC<EditBookingDialogProps> = ({ booking, isOpen, 
           </div>
           <div>
             <Label>Room Types</Label>
-            {roomTypes.map((rt, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <Input value={rt.roomType.name} disabled />
-                <Input type="number" value={rt.quantity} onChange={(e) => {
-                  const newRoomTypes = [...roomTypes];
-                  newRoomTypes[index].quantity = parseInt(e.target.value, 10);
-                  setRoomTypes(newRoomTypes);
-                }} />
-                <Button variant="destructive" size="sm" onClick={() => {
-                  const newRoomTypes = roomTypes.filter((_, i) => i !== index);
-                  setRoomTypes(newRoomTypes);
-                }}>Remove</Button>
-              </div>
-            ))}
+            {roomTypes.map((rt, index) => {
+              const availableCount = availabilityData.find(ad => ad.roomTypeId === rt.roomType.id)?.available || 0;
+              return (
+                <div key={index} className="flex items-center gap-2">
+                  <Input value={`${rt.roomType.name} (Available: ${availableCount})`} disabled />
+                  <Input type="number" value={rt.quantity} onChange={(e) => {
+                    const newRoomTypes = [...roomTypes];
+                    newRoomTypes[index].quantity = parseInt(e.target.value, 10);
+                    setRoomTypes(newRoomTypes);
+                  }} />
+                  <Button variant="destructive" size="sm" onClick={() => {
+                    const newRoomTypes = roomTypes.filter((_, i) => i !== index);
+                    setRoomTypes(newRoomTypes);
+                  }}>Remove</Button>
+                </div>
+              );
+            })}
           </div>
           <div>
             <Label htmlFor="addRoomType">Add Room Type</Label>
@@ -176,11 +208,14 @@ const EditBookingDialog: React.FC<EditBookingDialogProps> = ({ booking, isOpen, 
                   <SelectValue placeholder="Select a room type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {allRoomTypes.map((rt: any) => (
-                    <SelectItem key={rt.id} value={rt.id}>
-                      {rt.name}
-                    </SelectItem>
-                  ))}
+                  {allRoomTypes.map((rt: any) => {
+                    const availableCount = availabilityData.find(ad => ad.roomTypeId === rt.id)?.available || 0;
+                    return (
+                      <SelectItem key={rt.id} value={rt.id} disabled={availableCount === 0}>
+                        {rt.name} (Available: {availableCount})
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
