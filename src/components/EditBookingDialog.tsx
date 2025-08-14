@@ -200,7 +200,7 @@ const EditBookingDialog: React.FC<EditBookingDialogProps> = ({ booking, isOpen, 
 
               return (
                 <div key={index} className="flex items-center gap-2">
-                  <Input value={`${rt.roomType.name} (Available: ${minAvailableAcrossDates} of ${totalRoomsForType})`} disabled />
+                  <Input value={`${rt.roomType?.name || 'N/A'} (Available: ${minAvailableAcrossDates} of ${totalRoomsForType})`} disabled />
                   <Input type="number" value={rt.quantity} onChange={(e) => {
                     const newRoomTypes = [...roomTypes];
                     const newQuantity = parseInt(e.target.value, 10);
@@ -237,7 +237,7 @@ const EditBookingDialog: React.FC<EditBookingDialogProps> = ({ booking, isOpen, 
 
                     return (
                       <SelectItem key={rt.id} value={rt.id} disabled={minAvailableAcrossDates === 0}>
-                        {rt.name} (Available: ${minAvailableAcrossDates} of ${totalRoomsForType})
+                        {rt.name || 'N/A'} (Available: ${minAvailableAcrossDates} of ${totalRoomsForType})
                       </SelectItem>
                     );
                   })}
