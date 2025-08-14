@@ -160,7 +160,9 @@ const EditBookingDialog: React.FC<EditBookingDialogProps> = ({ booking, isOpen, 
             <Label htmlFor="hotel">Hotel</Label>
             <Select value={selectedHotelId} onValueChange={setSelectedHotelId}>
               <SelectTrigger>
-                <SelectValue placeholder="Select a hotel" />
+                <SelectValue placeholder="Select a hotel">
+                  {allHotels.find(hotel => hotel.id === selectedHotelId)?.name}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {allHotels.map((hotel: any) => (
