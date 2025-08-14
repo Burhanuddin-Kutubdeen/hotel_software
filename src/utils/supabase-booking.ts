@@ -194,10 +194,23 @@ export const bookingService = {
     console.log('getAvailabilityFallback: Booking Slots (raw):', bookingSlots);
 
     // Batch query for all room blocks in date range
+    const { data: hotelRooms, error: hotelRoomsError } = await supabase
+        .from('rooms')
+        .select('id')
+        .eq('hotel_id', hotelId);
+
+    if (hotelRoomsError) {
+        console.error('Error fetching hotel rooms:', hotelRoomsError);
+        throw hotelRoomsError;
+    }
+
+    const hotelRoomIds = hotelRooms.map(r => r.id);
+
     const { data: roomBlocks } = await supabase
       .from('room_blocks')
       .select('date, rooms!inner(room_type_id)')
-      .in('date', dates);
+      .in('date', dates)
+      .in('room_id', hotelRoomIds);
 
     console.log('getAvailabilityFallback: Room Blocks (raw):', roomBlocks);
 
