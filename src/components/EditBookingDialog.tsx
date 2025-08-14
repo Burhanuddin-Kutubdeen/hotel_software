@@ -43,10 +43,10 @@ const EditBookingDialog: React.FC<EditBookingDialogProps> = ({ booking, isOpen, 
         setRoomTypes([]);
       }
 
-      if (booking.hotel && booking.hotel.id) {
-        setSelectedHotelId(booking.hotel.id);
+      if (booking.hotels && booking.hotels.id) {
+        setSelectedHotelId(booking.hotels.id);
       } else {
-        console.warn("EditBookingDialog: booking.hotel or booking.hotel.id is undefined.", booking);
+        console.warn("EditBookingDialog: booking.hotels or booking.hotels.id is undefined.", booking);
         setSelectedHotelId('');
       }
 
