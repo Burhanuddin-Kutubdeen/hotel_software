@@ -113,11 +113,11 @@ const EditBookingDialog: React.FC<EditBookingDialogProps> = ({ booking, isOpen, 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Booking</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="grid gap-4 py-4">
           <div>
             <Label>Check-in Date</Label>
             <Calendar
