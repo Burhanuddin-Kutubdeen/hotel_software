@@ -438,7 +438,14 @@ export const bookingService = {
     // 1. Fetch the original booking to get all necessary details
     const { data: originalBooking, error: fetchBookingError } = await supabase
       .from('bookings')
-      .select('*')
+      .select(`
+        *,
+        booking_rooms (
+          quantity,
+          room_type_id,
+          room_types (id, name)
+        )
+      `)
       .eq('id', bookingId)
       .single();
 
@@ -447,9 +454,18 @@ export const bookingService = {
       throw new Error('Could not fetch original booking details.');
     }
 
+    const originalRoomTypes = originalBooking.booking_rooms.map(br => ({
+        roomType: {
+            id: br.room_types.id,
+            name: br.room_types.name,
+        },
+        quantity: br.quantity,
+    }));
+
     const newBookingDetails = {
       ...originalBooking,
       ...updates,
+      roomTypes: updates.roomTypes || originalRoomTypes,
     };
 
     // 2. Check availability for the new booking details, excluding the current booking
