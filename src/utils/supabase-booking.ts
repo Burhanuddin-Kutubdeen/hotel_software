@@ -166,6 +166,7 @@ export const bookingService = {
         const totalFromRoomTypes = roomType.total_rooms; // This now comes from getRoomTypes
         const totalFromRoomsTable = roomCountsFromRoomsTable.get(roomType.id) || 0;
 
+        console.log(`getAvailabilityFallback: RoomType: ${roomType.name}, totalFromRoomTypes: ${totalFromRoomTypes}, totalFromRoomsTable: ${totalFromRoomsTable}`);
         if (totalFromRoomTypes && totalFromRoomTypes > 0) {
             roomTypeTotalRooms.set(roomType.id, totalFromRoomTypes);
         } else {
