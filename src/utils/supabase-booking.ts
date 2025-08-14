@@ -27,9 +27,14 @@ export const bookingService = {
     // Map database fields to frontend interface
     return (data || []).map(roomType => ({
       id: roomType.id,
-      hotelId: roomType.hotel_id,
+      hotel_id: roomType.hotel_id,
       name: roomType.name,
-      basePrice: roomType.base_price
+      description: roomType.description,
+      base_price: roomType.base_price,
+      max_occupancy: roomType.max_occupancy,
+      total_rooms: roomType.total_rooms,
+      created_at: roomType.created_at,
+      updated_at: roomType.updated_at,
     }));
   },
 
@@ -140,27 +145,20 @@ export const bookingService = {
     const roomTypes = await this.getRoomTypes(hotelId);
     console.log('getAvailabilityFallback: Room types for hotel:', roomTypes);
 
-    // Fetch actual room counts for each room type
-    const { data: allRoomsData, error: allRoomsError } = await supabase
-      .from('rooms')
-      .select('room_type_id')
-      .eq('hotel_id', hotelId)
-      .eq('status', 'active');
-
-    if (allRoomsError) {
-      console.error('Error fetching all rooms:', allRoomsError);
-      throw allRoomsError;
-    }
-
-    console.log('getAvailabilityFallback: All Rooms Data (raw):', allRoomsData);
-
+    // Create a map from the roomTypes array
     const roomTypeTotalRooms = new Map<string, number>();
-    (allRoomsData || []).forEach(room => {
-      const currentCount = roomTypeTotalRooms.get(room.room_type_id) || 0;
-      roomTypeTotalRooms.set(room.room_type_id, currentCount + 1);
+    roomTypes.forEach(rt => {
+        roomTypeTotalRooms.set(rt.id, rt.total_rooms || 0);
     });
 
     console.log('getAvailabilityFallback: Room Type Total Rooms Map:', roomTypeTotalRooms);
+
+    if (roomTypeTotalRooms.size === 0 && roomTypes.length > 0) {
+      // If there are room types defined but no rooms in the rooms table, it's a data integrity issue.
+      // We can't proceed with 0 totals as it gives a false impression of availability.
+      // A better approach would be to have a total_rooms count on the room_types table itself.
+      console.warn("Data integrity issue: No rooms found for any room type in the 'rooms' table. Availability will be shown as 0. Please add a 'total_rooms' column to the 'room_types' table.");
+    }
     
     // Batch query for all bookings in date range
     const { data: bookingSlots } = await supabase
@@ -302,16 +300,14 @@ export const bookingService = {
 
     // Allocate inventory slots for each room type and quantity
     for (const selection of bookingData.roomTypes) {
-      for (let i = 0; i < selection.quantity; i++) {
-        await this.allocateSlots(bookingData.hotelId, selection.roomType.id, bookingData.checkIn, bookingData.nights, booking.id);
-      }
+      await this.allocateSlots(bookingData.hotelId, selection.roomType.id, bookingData.checkIn, bookingData.nights, booking.id, selection.quantity);
     }
 
     return { booking, customer };
   },
 
   // Simplified allocate slots - use incremental slot numbers to avoid conflicts
-  async allocateSlots(hotelId: string, roomTypeId: string, checkIn: string, nights: number, bookingId: string): Promise<void> {
+  async allocateSlots(hotelId: string, roomTypeId: string, checkIn: string, nights: number, bookingId: string, quantity: number = 1): Promise<void> {
     const dates = [];
     const startDate = new Date(checkIn);
     
@@ -334,19 +330,26 @@ export const bookingService = {
 
         const nextSlotNo = existingSlots && existingSlots.length > 0 ? existingSlots[0].slot_no + 1 : 1;
 
-        const { error } = await supabase
-          .from('room_type_inventory_slots')
-          .insert({
-            hotel_id: hotelId,
-            room_type_id: roomTypeId,
-            date,
-            slot_no: nextSlotNo,
-            booking_id: bookingId
-          });
-        
-        if (error) {
-          console.error('Slot insert error:', error);
-          throw error; // Propagate the error
+        const slotsToInsert = [];
+        for (let i = 0; i < quantity; i++) {
+            slotsToInsert.push({
+                hotel_id: hotelId,
+                room_type_id: roomTypeId,
+                date,
+                slot_no: nextSlotNo + i,
+                booking_id: bookingId
+            });
+        }
+
+        if (slotsToInsert.length > 0) {
+            const { error } = await supabase
+                .from('room_type_inventory_slots')
+                .insert(slotsToInsert);
+            
+            if (error) {
+                console.error('Slot insert error:', error);
+                throw error; // Propagate the error
+            }
         }
       } catch (error) {
         console.error('Error allocating slot:', error);
@@ -460,9 +463,7 @@ export const bookingService = {
         // Allocate new slots
         const currentHotelId = updates.hotelId || booking.hotel_id; // Use new hotelId if provided, else existing
         for (const selection of updates.roomTypes) {
-            for (let i = 0; i < selection.quantity; i++) {
-                await this.allocateSlots(currentHotelId, selection.roomType.id, booking.check_in, booking.nights, bookingId);
-            }
+            await this.allocateSlots(currentHotelId, selection.roomType.id, booking.check_in, booking.nights, bookingId, selection.quantity);
         }
     }
   }
