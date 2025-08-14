@@ -412,7 +412,7 @@ export const bookingService = {
     }
   },
 
-  """  // Update a booking
+    // Update a booking
   async updateBooking(bookingId: string, updates: {
     checkIn?: string;
     nights?: number;
@@ -514,5 +514,5 @@ export const bookingService = {
           await this.allocateSlots(hotelIdForAvailability, selection.roomType.id, checkInForAvailability, nightsForAvailability, bookingId, selection.quantity);
       }
     }
-  }""
+  }
 };
