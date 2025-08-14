@@ -144,8 +144,7 @@ export const bookingService = {
     const { data: allRoomsData, error: allRoomsError } = await supabase
       .from('rooms')
       .select('room_type_id')
-      .eq('hotel_id', hotelId)
-      .eq('status', 'active');
+      .eq('hotel_id', hotelId);
 
     if (allRoomsError) {
       console.error('Error fetching all rooms:', allRoomsError);
