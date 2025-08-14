@@ -27,9 +27,14 @@ export const bookingService = {
     // Map database fields to frontend interface
     return (data || []).map(roomType => ({
       id: roomType.id,
-      hotelId: roomType.hotel_id,
+      hotel_id: roomType.hotel_id,
       name: roomType.name,
-      basePrice: roomType.base_price
+      description: roomType.description,
+      base_price: roomType.base_price,
+      max_occupancy: roomType.max_occupancy,
+      total_rooms: roomType.total_rooms,
+      created_at: roomType.created_at,
+      updated_at: roomType.updated_at,
     }));
   },
 
@@ -140,7 +145,7 @@ export const bookingService = {
     const roomTypes = await this.getRoomTypes(hotelId);
     console.log('getAvailabilityFallback: Room types for hotel:', roomTypes);
 
-    // Fetch actual room counts for each room type
+    // Fetch actual room counts for each room type from the 'rooms' table
     const { data: allRoomsData, error: allRoomsError } = await supabase
       .from('rooms')
       .select('room_type_id')
@@ -151,13 +156,24 @@ export const bookingService = {
       throw allRoomsError;
     }
 
-    console.log('getAvailabilityFallback: All Rooms Data (raw):', allRoomsData);
+    const roomCountsFromRoomsTable = new Map<string, number>();
+    (allRoomsData || []).forEach(room => {
+      const currentCount = roomCountsFromRoomsTable.get(room.room_type_id) || 0;
+      roomCountsFromRoomsTable.set(room.room_type_id, currentCount + 1);
+    });
 
     const roomTypeTotalRooms = new Map<string, number>();
-    (allRoomsData || []).forEach(room => {
-      const currentCount = roomTypeTotalRooms.get(room.room_type_id) || 0;
-      roomTypeTotalRooms.set(room.room_type_id, currentCount + 1);
-    });
+    for (const roomType of roomTypes) {
+        // Prioritize total_rooms from room_types table, but fallback to counting rooms
+        const totalFromRoomTypes = roomType.total_rooms; // This now comes from getRoomTypes
+        const totalFromRoomsTable = roomCountsFromRoomsTable.get(roomType.id) || 0;
+
+        if (totalFromRoomTypes && totalFromRoomTypes > 0) {
+            roomTypeTotalRooms.set(roomType.id, totalFromRoomTypes);
+        } else {
+            roomTypeTotalRooms.set(roomType.id, totalFromRoomsTable);
+        }
+    }
 
     console.log('getAvailabilityFallback: Room Type Total Rooms Map:', roomTypeTotalRooms);
     
