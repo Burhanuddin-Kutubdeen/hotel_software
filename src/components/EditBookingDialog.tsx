@@ -187,9 +187,10 @@ const EditBookingDialog: React.FC<EditBookingDialogProps> = ({ booking, isOpen, 
                   <Input value={`${rt.roomType.name} (Available: ${availableCount} of ${availabilityData.find(ad => ad.roomTypeId === rt.roomType.id)?.total || 0})`} disabled />
                   <Input type="number" value={rt.quantity} onChange={(e) => {
                     const newRoomTypes = [...roomTypes];
-                    newRoomTypes[index].quantity = parseInt(e.target.value, 10);
+                    const newQuantity = parseInt(e.target.value, 10);
+                    newRoomTypes[index].quantity = newQuantity > availableCount ? availableCount : newQuantity;
                     setRoomTypes(newRoomTypes);
-                  }} />
+                  }} max={availableCount} />
                   <Button variant="destructive" size="sm" onClick={() => {
                     const newRoomTypes = roomTypes.filter((_, i) => i !== index);
                     setRoomTypes(newRoomTypes);
