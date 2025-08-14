@@ -125,13 +125,13 @@ export const bookingService = {
   },
 
   // Get availability for date range with optimized batch queries
-  async getAvailability(hotelId: string, checkIn: string, nights: number): Promise<AvailabilityData[]> {
+  async getAvailability(hotelId: string, checkIn: string, nights: number, excludeBookingId?: string): Promise<AvailabilityData[]> {
     // Use fallback method directly for reliability
-    return this.getAvailabilityFallback(hotelId, checkIn, nights);
+    return this.getAvailabilityFallback(hotelId, checkIn, nights, excludeBookingId);
   },
 
   // Fallback method with original logic but some optimizations
-  async getAvailabilityFallback(hotelId: string, checkIn: string, nights: number): Promise<AvailabilityData[]> {
+  async getAvailabilityFallback(hotelId: string, checkIn: string, nights: number, excludeBookingId?: string): Promise<AvailabilityData[]> {
     console.log(`getAvailabilityFallback: Fetching availability for hotelId: ${hotelId}, checkIn: ${checkIn}, nights: ${nights}`);
     const dates = [];
     const startDate = new Date(checkIn);
@@ -178,12 +178,18 @@ export const bookingService = {
     console.log('getAvailabilityFallback: Room Type Total Rooms Map:', roomTypeTotalRooms);
     
     // Batch query for all bookings in date range
-    const { data: bookingSlots } = await supabase
+    let bookingSlotsQuery = supabase
       .from('room_type_inventory_slots')
       .select('room_type_id, date')
       .eq('hotel_id', hotelId)
       .in('date', dates)
       .not('booking_id', 'is', null);
+
+    if (excludeBookingId) {
+      bookingSlotsQuery = bookingSlotsQuery.not('booking_id', 'eq', excludeBookingId);
+    }
+
+    const { data: bookingSlots } = await bookingSlotsQuery;
 
     console.log('getAvailabilityFallback: Booking Slots (raw):', bookingSlots);
 
@@ -406,20 +412,58 @@ export const bookingService = {
     }
   },
 
-  // Update a booking
+  """  // Update a booking
   async updateBooking(bookingId: string, updates: {
     checkIn?: string;
     nights?: number;
     roomTypes?: Array<{ roomType: { id: string; name: string }; quantity: number }>;
     hotelId?: string;
   }): Promise<void> {
+    // 1. Fetch the original booking to get all necessary details
+    const { data: originalBooking, error: fetchBookingError } = await supabase
+      .from('bookings')
+      .select('hotel_id, check_in, nights')
+      .eq('id', bookingId)
+      .single();
+
+    if (fetchBookingError) {
+      console.error('Error fetching original booking:', fetchBookingError);
+      throw new Error('Could not fetch original booking details.');
+    }
+
+    // 2. Determine the parameters for the availability check
+    const checkInForAvailability = updates.checkIn || originalBooking.check_in;
+    const nightsForAvailability = updates.nights || originalBooking.nights;
+    const hotelIdForAvailability = updates.hotelId || originalBooking.hotel_id;
+
+    // 3. Check availability for the new booking details, excluding the current booking
+    if (updates.roomTypes) {
+      const availability = await this.getAvailability(hotelIdForAvailability, checkInForAvailability, nightsForAvailability, bookingId);
+      
+      const datesToCheck = [];
+      const startDate = new Date(checkInForAvailability);
+      for (let i = 0; i < nightsForAvailability; i++) {
+        datesToCheck.push(format(addDays(startDate, i), 'yyyy-MM-dd'));
+      }
+
+      for (const selection of updates.roomTypes) {
+        for (const date of datesToCheck) {
+          const dayAvailability = availability.find(a => a.date === date && a.roomTypeId === selection.roomType.id);
+          if (!dayAvailability || dayAvailability.available < selection.quantity) {
+            throw new Error(`Not enough rooms available for ${selection.roomType.name} on ${date}. Only ${dayAvailability?.available || 0} left.`);
+          }
+        }
+      }
+    }
+
+    // 4. If availability check passes, proceed with the update
     const { error: bookingError } = await supabase
       .from('bookings')
       .update({
         check_in: updates.checkIn,
         nights: updates.nights,
         check_out: updates.checkIn && updates.nights ? format(addDays(new Date(updates.checkIn), updates.nights), 'yyyy-MM-dd') : undefined,
-        hotel_id: updates.hotelId, // Update hotel_id if provided
+        hotel_id: updates.hotelId,
       })
       .eq('id', bookingId);
 
@@ -428,8 +472,9 @@ export const bookingService = {
       throw new Error(`Failed to update booking details: ${bookingError.message}`);
     }
 
+    // 5. Update room types and re-allocate slots if necessary
     if (updates.roomTypes) {
-      // 1. Delete old booking_rooms entries
+      // Delete old booking_rooms entries
       const { error: deleteBookingRoomsError } = await supabase
         .from('booking_rooms')
         .delete()
@@ -440,7 +485,7 @@ export const bookingService = {
         throw deleteBookingRoomsError;
       }
 
-      // 2. Insert new booking_rooms entries
+      // Insert new booking_rooms entries
       const bookingRoomsData = updates.roomTypes.map(rt => ({
         booking_id: bookingId,
         room_type_id: rt.roomType.id,
@@ -455,30 +500,19 @@ export const bookingService = {
         console.error('Error inserting new booking rooms:', insertBookingRoomsError);
         throw insertBookingRoomsError;
       }
-    }
 
-    // 3. Re-allocate inventory slots
-    const { data: booking, error: fetchBookingError } = await supabase.from('bookings').select('hotel_id, check_in, nights').eq('id', bookingId).single();
-    if (fetchBookingError) {
-      console.error('Error fetching booking for slot re-allocation:', fetchBookingError);
-      throw fetchBookingError;
-    }
+      // Re-allocate inventory slots
+      // Delete old slots
+      const { error: deleteSlotsError } = await supabase.from('room_type_inventory_slots').delete().eq('booking_id', bookingId);
+      if (deleteSlotsError) {
+          console.error('Error deleting old inventory slots:', deleteSlotsError);
+          throw deleteSlotsError;
+      }
 
-    if (booking && updates.roomTypes) {
-        // Delete old slots
-        const { error: deleteSlotsError } = await supabase.from('room_type_inventory_slots').delete().eq('booking_id', bookingId);
-        if (deleteSlotsError) {
-            console.error('Error deleting old inventory slots:', deleteSlotsError);
-            throw deleteSlotsError;
-        }
-
-        // Allocate new slots
-        const currentHotelId = updates.hotelId || booking.hotel_id; // Use new hotelId if provided, else existing
-        for (const selection of updates.roomTypes) {
-            for (let i = 0; i < selection.quantity; i++) {
-                await this.allocateSlots(currentHotelId, selection.roomType.id, booking.check_in, booking.nights, bookingId);
-            }
-        }
+      // Allocate new slots
+      for (const selection of updates.roomTypes) {
+          await this.allocateSlots(hotelIdForAvailability, selection.roomType.id, checkInForAvailability, nightsForAvailability, bookingId, selection.quantity);
+      }
     }
-  }
+  }""
 };
