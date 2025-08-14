@@ -34,12 +34,13 @@ const EditBookingDialog: React.FC<EditBookingDialogProps> = ({ booking, isOpen, 
       setNights(booking.nights);
 
       if (booking.booking_rooms) {
+        console.log("EditBookingDialog: booking.booking_rooms content:", booking.booking_rooms);
         setRoomTypes(booking.booking_rooms.map((br: any) => ({
           roomType: br.room_types,
           quantity: br.quantity
         })));
       } else {
-        console.warn("EditBookingDialog: booking.booking_rooms is undefined.", booking);
+        console.warn("EditBookingDialog: booking.booking_rooms is undefined or empty.", booking);
         setRoomTypes([]);
       }
 
