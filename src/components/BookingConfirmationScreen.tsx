@@ -4,7 +4,7 @@ import { Check, Copy, ArrowLeft, Sparkles, PartyPopper } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import EditBookingDialog from './EditBookingDialog';
+
 import { bookingService } from '@/utils/supabase-booking';
 
 const BookingConfirmationScreen: React.FC = () => {
@@ -19,8 +19,7 @@ const BookingConfirmationScreen: React.FC = () => {
     setLoading
   } = useApp();
 
-  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
-  const [selectedBooking, setSelectedBooking] = React.useState<any>(null);
+  
 
   if (!currentBooking || !currentCustomer || !bookingFormData) {
     return (
@@ -75,10 +74,7 @@ Confirmation ID: ${currentBooking.confirmation_id || currentBooking.id.slice(0, 
     setCurrentStep('availability');
   };
 
-  const handleEdit = () => {
-    setSelectedBooking(currentBooking);
-    setIsEditDialogOpen(true);
-  };
+  
 
   const handleDelete = async () => {
     if (window.confirm("Are you sure you want to delete this booking?")) {
@@ -194,14 +190,7 @@ Confirmation ID: ${currentBooking.confirmation_id || currentBooking.id.slice(0, 
       <div className="flex justify-center gap-4"> {/* Added gap-4 for spacing */}
         {console.log("BookingConfirmationScreen: hasPermission('Edit Bookings')", hasPermission('Edit Bookings'))}
         {console.log("BookingConfirmationScreen: hasPermission('Delete Bookings')", hasPermission('Delete Bookings'))}
-        {hasPermission('Edit Bookings') && (
-          <Button
-            onClick={handleEdit}
-            className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:scale-105 transition-all duration-200 shadow-xl text-lg px-8 py-3"
-          >
-            Edit Booking
-          </Button>
-        )}
+        
         {hasPermission('Delete Bookings') && (
           <Button
             onClick={handleDelete}
@@ -228,19 +217,7 @@ Confirmation ID: ${currentBooking.confirmation_id || currentBooking.id.slice(0, 
         </Button>
       </div>
 
-      <EditBookingDialog
-        booking={selectedBooking}
-        isOpen={isEditDialogOpen}
-        onClose={() => setIsEditDialogOpen(false)}
-        onSave={() => {
-          // After saving, refresh the current booking data if needed
-          // For now, we'll just close the dialog and rely on the user to re-check
-          // or navigate back to search results to see updated data.
-          setIsEditDialogOpen(false);
-          // Optionally, you might want to re-fetch currentBooking here
-          // if the confirmation screen needs to reflect the changes immediately.
-        }}
-      />
+      
     </div>
   );
 };

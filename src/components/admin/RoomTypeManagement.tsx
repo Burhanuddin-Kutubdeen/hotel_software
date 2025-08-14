@@ -14,6 +14,7 @@ interface RoomType {
   description: string;
   base_price: number;
   max_occupancy: number;
+  total_rooms: number; // Added total_rooms
   hotels?: { name: string };
 }
 
@@ -26,7 +27,8 @@ const RoomTypeManagement: React.FC = () => {
     name: '',
     description: '',
     base_price: '',
-    max_occupancy: ''
+    max_occupancy: '',
+    total_rooms: '' // Added total_rooms
   });
 
   useEffect(() => {
@@ -40,15 +42,17 @@ const RoomTypeManagement: React.FC = () => {
   };
 
   const loadRoomTypes = async () => {
-    const { data } = await supabase.from('room_types').select('*, hotels(name), rooms(count)');
+    const { data } = await supabase.from('room_types').select('*, hotels(name)');
     if (data) setRoomTypes(data as any);
   };
 
   const handleSave = async () => {
     const payload = {
       ...formData,
+      name: formData.name.trim(), // Trim whitespace
       base_price: parseFloat(formData.base_price),
-      max_occupancy: parseInt(formData.max_occupancy)
+      max_occupancy: parseInt(formData.max_occupancy),
+      total_rooms: parseInt(formData.total_rooms) // Added total_rooms
     };
 
     if (editingRoomType) {
@@ -69,7 +73,8 @@ const RoomTypeManagement: React.FC = () => {
       name: roomType.name,
       description: roomType.description || '',
       base_price: roomType.base_price.toString(),
-      max_occupancy: roomType.max_occupancy.toString()
+      max_occupancy: roomType.max_occupancy.toString(),
+      total_rooms: roomType.total_rooms.toString() // Added total_rooms
     });
   };
 
@@ -103,7 +108,7 @@ const RoomTypeManagement: React.FC = () => {
 
   const handleCancel = () => {
     setEditingRoomType(null);
-    setFormData({ hotel_id: '', name: '', description: '', base_price: '', max_occupancy: '' });
+    setFormData({ hotel_id: '', name: '', description: '', base_price: '', max_occupancy: '', total_rooms: '' });
   };
 
   return (
@@ -142,7 +147,7 @@ const RoomTypeManagement: React.FC = () => {
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4"> {/* Changed to grid-cols-3 */}
             <div>
               <Label htmlFor="base_price">Base Price</Label>
               <Input
@@ -159,6 +164,15 @@ const RoomTypeManagement: React.FC = () => {
                 type="number"
                 value={formData.max_occupancy}
                 onChange={(e) => setFormData({ ...formData, max_occupancy: e.target.value })}
+              />
+            </div>
+            <div> {/* New div for total_rooms */}
+              <Label htmlFor="total_rooms">Total Rooms</Label>
+              <Input
+                id="total_rooms"
+                type="number"
+                value={formData.total_rooms}
+                onChange={(e) => setFormData({ ...formData, total_rooms: e.target.value })}
               />
             </div>
           </div>
@@ -183,7 +197,7 @@ const RoomTypeManagement: React.FC = () => {
                 <div>
                   <h3 className="font-semibold">{roomType.name}</h3>
                   <p className="text-sm text-gray-600">{roomType.hotels?.name}</p>
-                  <p className="text-sm text-gray-500">${roomType.base_price}/night • {roomType.max_occupancy} guests • {(roomType.rooms?.[0] as any)?.count || 0} rooms</p>
+                  <p className="text-sm text-gray-500">${roomType.base_price}/night • {roomType.max_occupancy} guests • {roomType.total_rooms} rooms</p>
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" onClick={() => handleEdit(roomType)}>

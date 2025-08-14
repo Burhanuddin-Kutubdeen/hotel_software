@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { BookingFormData } from '@/types';
 import { Calendar } from '@/components/ui/calendar';
 import { SelectSingleEventHandler } from 'react-day-picker';
-import EditBookingDialog from './EditBookingDialog';
+
 const CheckReservationScreen: React.FC = () => {
   const { setCurrentStep, loading, setLoading, setCurrentBooking, setBookingFormData, previousSearchCriteria, setPreviousSearchCriteria, setIsFromCheckReservationFlow, hasPermission } = useApp();
   const [searchCriteria, setSearchCriteria] = useState({
@@ -26,13 +26,9 @@ const CheckReservationScreen: React.FC = () => {
   const [bookings, setBookings] = useState<any[]>([]);
   const [searched, setSearched] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  
 
-  const handleEdit = (booking: any) => {
-    setSelectedBooking(booking);
-    setIsEditDialogOpen(true);
-  };
+  
 
   const handleDelete = async (booking: any) => {
     if (window.confirm("Are you sure you want to delete this booking?")) {
@@ -314,11 +310,7 @@ const CheckReservationScreen: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            {hasPermission('Edit Bookings') && (
-                              <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleEdit(booking); }}>
-                                Edit
-                              </Button>
-                            )}
+                            
                             {hasPermission('Delete Bookings') && (
                               <Button variant="destructive" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(booking); }}>
                                 Delete
@@ -336,12 +328,7 @@ const CheckReservationScreen: React.FC = () => {
         </Card>
       )}
 
-      <EditBookingDialog
-        booking={selectedBooking}
-        isOpen={isEditDialogOpen}
-        onClose={() => setIsEditDialogOpen(false)}
-        onSave={handleSearch}
-      />
+      
     </div>
   );
 };
