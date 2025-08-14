@@ -91,6 +91,22 @@ const EditBookingDialog: React.FC<EditBookingDialogProps> = ({ booking, isOpen, 
           const data = await bookingService.getAvailability(selectedHotelId, format(checkIn, 'yyyy-MM-dd'), nights);
           setAvailabilityData(data);
           console.log("EditBookingDialog: Fetched availability data:", data);
+
+          // After fetching new availability, re-evaluate current roomTypes quantities
+          const currentDatesOfBooking = [];
+          for (let i = 0; i < nights; i++) {
+            currentDatesOfBooking.push(format(addDays(checkIn, i), 'yyyy-MM-dd'));
+          }
+
+          const updatedRoomTypes = roomTypes.map(rt => {
+            const minAvailableAcrossDates = currentDatesOfBooking.reduce((minAvailable, date) => {
+              const dailyAvailability = data.find(ad => ad.roomTypeId === rt.roomType.id && ad.date === date);
+              return Math.min(minAvailable, dailyAvailability?.available || 0);
+            }, Infinity);
+            const newQuantity = Math.min(rt.quantity, minAvailableAcrossDates);
+            return { ...rt, quantity: newQuantity };
+          });
+          setRoomTypes(updatedRoomTypes); // Update roomTypes state
         } catch (error) {
           console.error('Error fetching availability:', error);
         } finally {
