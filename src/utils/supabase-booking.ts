@@ -137,7 +137,7 @@ export const bookingService = {
     const startDate = new Date(checkIn);
     
     // Generate date range (check-in - 5 to check-out + 5)
-    for (let i = 0; i < nights; i++) {
+    for (let i = -5; i < nights + 5; i++) {
       dates.push(format(addDays(startDate, i), 'yyyy-MM-dd'));
     }
     console.log('getAvailabilityFallback: Dates to check:', dates);
