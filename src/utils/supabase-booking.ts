@@ -71,6 +71,11 @@ export const bookingService = {
       query = query.eq('confirmation_id', criteria.confirmationId.trim());
     }
 
+    // Apply email filter directly in Supabase query
+    if (criteria.email?.trim()) {
+      query = query.eq('customers.email', criteria.email.trim());
+    }
+
     const { data, error } = await query.order('created_at', { ascending: false });
     
     if (error) {
@@ -80,7 +85,7 @@ export const bookingService = {
     
     if (!data) return [];
 
-    // Filter results in JavaScript for related table fields
+    // Filter results in JavaScript for related table fields (name, phone, hotelName, date)
     let filteredData = data;
 
     if (criteria.name?.trim()) {
@@ -94,13 +99,6 @@ export const bookingService = {
       const phoneFilter = criteria.phone.trim();
       filteredData = filteredData.filter(booking => 
         booking.customers?.phone?.includes(phoneFilter)
-      );
-    }
-
-    if (criteria.email?.trim()) {
-      const emailFilter = criteria.email.trim().toLowerCase();
-      filteredData = filteredData.filter(booking => 
-        booking.customers?.email?.toLowerCase().includes(emailFilter)
       );
     }
 
