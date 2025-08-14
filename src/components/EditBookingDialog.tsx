@@ -254,6 +254,5 @@ const EditBookingDialog: React.FC<EditBookingDialogProps> = ({ booking, isOpen, 
     </Dialog>
   );
 };
-};
 
 export default EditBookingDialog;
