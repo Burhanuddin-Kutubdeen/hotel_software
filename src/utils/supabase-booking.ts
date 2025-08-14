@@ -188,9 +188,12 @@ export const bookingService = {
       bookingSlotsQuery = bookingSlotsQuery.not('booking_id', 'eq', excludeBookingId);
     }
 
-    const { data: bookingSlots } = await bookingSlotsQuery;
-
-    console.log('getAvailabilityFallback: Booking Slots (raw):', bookingSlots);
+    const { data: bookingSlots, error: bookingSlotsError } = await bookingSlotsQuery;
+    if (bookingSlotsError) {
+      console.error('Error fetching booking slots:', bookingSlotsError);
+      throw bookingSlotsError;
+    }
+    console.log('getAvailabilityFallback: Booking Slots (after excludeBookingId filter):', bookingSlots);
 
     // Batch query for all room blocks in date range
     const { data: hotelRooms, error: hotelRoomsError } = await supabase
