@@ -556,7 +556,9 @@ export const bookingService = {
 
     // 6. Allocate new slots
     for (const selection of newBookingDetails.roomTypes) {
-        await this.allocateSlots(newBookingDetails.hotel_id, selection.roomType.id, newBookingDetails.check_in, newBookingDetails.nights, bookingId, selection.quantity);
+      for (let i = 0; i < selection.quantity; i++) {
+        await this.allocateSlots(newBookingDetails.hotel_id, selection.roomType.id, newBookingDetails.check_in, newBookingDetails.nights, bookingId);
+      }
     }
 
     return updatedBooking;
