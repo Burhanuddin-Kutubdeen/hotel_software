@@ -108,17 +108,28 @@ const EditBookingDialog: React.FC<EditBookingDialogProps> = ({ booking, isOpen, 
 
   console.log("EditBookingDialog: Rendering with state - checkIn:", checkIn, "nights:", nights, "roomTypes:", roomTypes, "selectedHotelId:", selectedHotelId, "allHotels:", allHotels, "allRoomTypes:", allRoomTypes);
 
+  const datesOfBooking = [];
+  if (checkIn && nights > 0) {
+    for (let i = 0; i < nights; i++) {
+      datesOfBooking.push(format(addDays(checkIn, i), 'yyyy-MM-dd'));
+    }
+  }
+
   const handleSaveChanges = async () => {
     if (!checkIn || nights <= 0) {
       alert("Please ensure check-in date is selected and nights is greater than 0.");
       return;
     }
 
-    // Validate room type quantities against availability
+    // Validate room type quantities against availability across all booking dates
     for (const selectedRoom of roomTypes) {
-      const available = availabilityData.find(ad => ad.roomTypeId === selectedRoom.roomType.id)?.available;
-      if (available !== undefined && selectedRoom.quantity > available) {
-        alert(`Error: ${selectedRoom.roomType.name} has only ${available} rooms available. You selected ${selectedRoom.quantity}.`);
+      const minAvailableAcrossDates = datesOfBooking.reduce((minAvailable, date) => {
+        const dailyAvailability = availabilityData.find(ad => ad.roomTypeId === selectedRoom.roomType.id && ad.date === date);
+        return Math.min(minAvailable, dailyAvailability?.available || 0);
+      }, Infinity);
+
+      if (selectedRoom.quantity > minAvailableAcrossDates) {
+        alert(`Error: ${selectedRoom.roomType.name} has only ${minAvailableAcrossDates} rooms available for the entire booking period. You selected ${selectedRoom.quantity}.`);
         return;
       }
     }
@@ -181,16 +192,21 @@ const EditBookingDialog: React.FC<EditBookingDialogProps> = ({ booking, isOpen, 
           <div>
             <Label>Room Types</Label>
             {roomTypes.map((rt, index) => {
-              const availableCount = availabilityData.find(ad => ad.roomTypeId === rt.roomType.id)?.available || 0;
+              const minAvailableAcrossDates = datesOfBooking.reduce((minAvailable, date) => {
+                const dailyAvailability = availabilityData.find(ad => ad.roomTypeId === rt.roomType.id && ad.date === date);
+                return Math.min(minAvailable, dailyAvailability?.available || 0);
+              }, Infinity);
+              const totalRoomsForType = availabilityData.find(ad => ad.roomTypeId === rt.roomType.id && ad.date === datesOfBooking[0])?.total || 0; // Assuming total is consistent across dates
+
               return (
                 <div key={index} className="flex items-center gap-2">
-                  <Input value={`${rt.roomType.name} (Available: ${availableCount} of ${availabilityData.find(ad => ad.roomTypeId === rt.roomType.id)?.total || 0})`} disabled />
+                  <Input value={`${rt.roomType.name} (Available: ${minAvailableAcrossDates} of ${totalRoomsForType})`} disabled />
                   <Input type="number" value={rt.quantity} onChange={(e) => {
                     const newRoomTypes = [...roomTypes];
                     const newQuantity = parseInt(e.target.value, 10);
-                    newRoomTypes[index].quantity = newQuantity > availableCount ? availableCount : newQuantity;
+                    newRoomTypes[index].quantity = newQuantity > minAvailableAcrossDates ? minAvailableAcrossDates : newQuantity;
                     setRoomTypes(newRoomTypes);
-                  }} max={availableCount} />
+                  }} max={minAvailableAcrossDates} />
                   <Button variant="destructive" size="sm" onClick={() => {
                     const newRoomTypes = roomTypes.filter((_, i) => i !== index);
                     setRoomTypes(newRoomTypes);
@@ -213,10 +229,15 @@ const EditBookingDialog: React.FC<EditBookingDialogProps> = ({ booking, isOpen, 
                 </SelectTrigger>
                 <SelectContent>
                   {allRoomTypes.map((rt: any) => {
-                    const availableCount = availabilityData.find(ad => ad.roomTypeId === rt.id)?.available || 0;
+                    const minAvailableAcrossDates = datesOfBooking.reduce((minAvailable, date) => {
+                      const dailyAvailability = availabilityData.find(ad => ad.roomTypeId === rt.id && ad.date === date);
+                      return Math.min(minAvailable, dailyAvailability?.available || 0);
+                    }, Infinity);
+                    const totalRoomsForType = availabilityData.find(ad => ad.roomTypeId === rt.id && ad.date === datesOfBooking[0])?.total || 0; // Assuming total is consistent across dates
+
                     return (
-                      <SelectItem key={rt.id} value={rt.id} disabled={availableCount === 0}>
-                        {rt.name} (Available: {availableCount} of {availabilityData.find(ad => ad.roomTypeId === rt.id)?.total || 0})
+                      <SelectItem key={rt.id} value={rt.id} disabled={minAvailableAcrossDates === 0}>
+                        {rt.name} (Available: ${minAvailableAcrossDates} of ${totalRoomsForType})
                       </SelectItem>
                     );
                   })}
@@ -232,6 +253,7 @@ const EditBookingDialog: React.FC<EditBookingDialogProps> = ({ booking, isOpen, 
       </DialogContent>
     </Dialog>
   );
+};
 };
 
 export default EditBookingDialog;
