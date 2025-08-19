@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 const GuestDetailsScreen: React.FC = () => {
   const {
     bookingFormData,
@@ -15,7 +16,8 @@ const GuestDetailsScreen: React.FC = () => {
     setCurrentBooking,
     setLoading,
     refreshAvailability,
-    setIsFromCheckReservationFlow
+    setIsFromCheckReservationFlow,
+    hasPermission // Added hasPermission
   } = useApp();
 
   const [customerData, setCustomerData] = useState({
@@ -31,6 +33,10 @@ const GuestDetailsScreen: React.FC = () => {
     totalPrice: '',
     notes: ''
   });
+
+  const [mealPlan, setMealPlan] = useState<string>('RO'); // New state for Meal Plan
+  const [availableMealPlans, setAvailableMealPlans] = useState<string[]>(['RO', 'BB', 'HB', 'FB']); // State for dynamic meal plans
+  const [newMealPlan, setNewMealPlan] = useState<string>(''); // State for new meal plan input
 
   useEffect(() => {
     if (bookingFormData) {
@@ -68,7 +74,8 @@ const GuestDetailsScreen: React.FC = () => {
         nights: bookingFormData.nights,
         customer: customerData,
         totalPrice: pricingData.totalPrice ? parseFloat(pricingData.totalPrice) : undefined,
-        notes: pricingData.notes
+        notes: pricingData.notes,
+        mealPlan: mealPlan // Pass mealPlan to the service
       });
       setCurrentBooking(booking, customer);
       refreshAvailability(); // Trigger availability refresh
@@ -237,6 +244,45 @@ const GuestDetailsScreen: React.FC = () => {
                     ))}
                   </div>
                 </div>
+                <div>
+                  <Label className="text-xs font-medium text-slate-600">🍽️ Meal Plan</Label>
+                  <Select value={mealPlan} onValueChange={setMealPlan}>
+                    <SelectTrigger className="w-full bg-white border-2 border-slate-300 h-9 focus:border-teal-500">
+                      <SelectValue placeholder="Select a meal plan" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableMealPlans.map((plan) => (
+                        <SelectItem key={plan} value={plan}>{plan}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {hasPermission('manage_meal_plans') && (
+                  <div className="mt-2">
+                    <Label htmlFor="newMealPlan" className="text-xs font-medium">Add New Meal Plan (Admin)</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="newMealPlan"
+                        value={newMealPlan}
+                        onChange={(e) => setNewMealPlan(e.target.value)}
+                        placeholder="e.g., AI - All Inclusive"
+                        className="bg-white border-2 border-slate-300 h-9 focus:border-teal-500"
+                      />
+                      <Button
+                        onClick={() => {
+                          if (newMealPlan.trim() && !availableMealPlans.includes(newMealPlan.trim().toUpperCase())) {
+                            setAvailableMealPlans([...availableMealPlans, newMealPlan.trim().toUpperCase()]);
+                            setNewMealPlan('');
+                          }
+                        }}
+                        variant="outline"
+                        size="sm"
+                      >
+                        Add
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

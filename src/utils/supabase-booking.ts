@@ -265,6 +265,7 @@ export const bookingService = {
     };
     totalPrice?: number;
     notes?: string;
+    mealPlan?: string; // Added mealPlan
   }): Promise<{ booking: Booking; customer: Customer }> {
     // 1. Check availability before creating the booking
     const availability = await this.getAvailability(bookingData.hotelId, bookingData.checkIn, bookingData.nights);
@@ -315,6 +316,7 @@ export const bookingService = {
         notes: bookingData.notes,
         referral_name: bookingData.customer.referralName,
         ref_agency: bookingData.customer.refAgency,
+        meal_plan: bookingData.mealPlan, // Added meal_plan
         status: 'confirmed'
       }])
       .select()

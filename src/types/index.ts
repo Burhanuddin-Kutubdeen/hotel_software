@@ -73,4 +73,5 @@ export interface BookingFormData {
   customer: Customer;
   price: number;
   notes: string;
+  mealPlan?: string; // Added mealPlan
 }
