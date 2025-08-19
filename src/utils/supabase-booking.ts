@@ -27,14 +27,14 @@ export const bookingService = {
     // Map database fields to frontend interface
     return (data || []).map(roomType => ({
       id: roomType.id,
-      hotel_id: roomType.hotel_id,
+      hotelId: roomType.hotel_id,
       name: roomType.name,
       description: roomType.description,
-      base_price: roomType.base_price,
-      max_occupancy: roomType.max_occupancy,
-      total_rooms: roomType.total_rooms,
-      created_at: roomType.created_at,
-      updated_at: roomType.updated_at,
+      basePrice: roomType.base_price,
+      maxOccupancy: roomType.max_occupancy,
+      totalRooms: roomType.total_rooms,
+      createdAt: roomType.created_at,
+      updatedAt: roomType.updated_at,
     }));
   },
 
