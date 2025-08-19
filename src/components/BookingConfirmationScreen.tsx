@@ -55,13 +55,11 @@ const BookingConfirmationScreen: React.FC = () => {
       .map(rt => `${rt.quantity}x ${rt.roomType.name}`)
       .join(', ');
 
-    return `✨ Booking confirmed at ${bookingFormData.hotel.name}
+    const mealPlanText = currentBooking.meal_plan
+      ? `\nMeal Plan: ${currentBooking.meal_plan}`
+      : '';
 
-Guest: ${currentCustomer.name} — ${currentCustomer.phone}${currentCustomer.country ? ` — ${currentCustomer.country}` : ''}
-Stay: ${checkInFormatted} → ${checkOut}, ${bookingFormData.nights} night${bookingFormData.nights > 1 ? 's' : ''}, ${roomTypesText}${priceText}
-Confirmation ID: ${currentBooking.confirmation_id || currentBooking.id.slice(0, 8).toUpperCase()}${referralText}${notesText}
-
-🎉 We look forward to hosting you!`;
+    return `✨ Booking confirmed at ${bookingFormData.hotel.name}\n\nGuest: ${currentCustomer.name} — ${currentCustomer.phone}${currentCustomer.country ? ` — ${currentCustomer.country}` : ''}\nStay: ${checkInFormatted} → ${checkOut}, ${bookingFormData.nights} night${bookingFormData.nights > 1 ? 's' : ''}, ${roomTypesText}${priceText}${mealPlanText}\nConfirmation ID: ${currentBooking.confirmation_id || currentBooking.id.slice(0, 8).toUpperCase()}${referralText}${notesText}\n\n🎉 We look forward to hosting you!`;
   };
 
   const handleCopyMessage = () => {
@@ -147,6 +145,9 @@ Confirmation ID: ${currentBooking.confirmation_id || currentBooking.id.slice(0, 
                 <p><span className="font-semibold">📅 Check-out:</span> {checkOut}</p>
                 <p><span className="font-semibold">🌙 Nights:</span> {bookingFormData.nights}</p>
                 <p><span className="font-semibold">🏠 Room Types:</span> {bookingFormData.roomTypes.map(rt => `${rt.quantity}x ${rt.roomType.name}`).join(', ')}</p>
+                {currentBooking.meal_plan && (
+                  <p><span className="font-semibold">🍽️ Meal Plan:</span> {currentBooking.meal_plan}</p>
+                )}
                 {currentBooking.total_price && (
                   <p><span className="font-semibold">💰 Total:</span> LKR {currentBooking.total_price.toLocaleString()}</p>
                 )}
