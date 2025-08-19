@@ -7,9 +7,9 @@ import RoomManagement from './admin/RoomManagement';
 import YearCalendar from './admin/YearCalendar';
 import UserManagement from './admin/UserManagement';
 import RoleManagement from './admin/RoleManagement';
-import LeadsManagement from './admin/LeadsManagement';
+import DMCManagement from './admin/DMCManagement';
 
-type AdminView = 'hotels' | 'roomTypes' | 'rooms' | 'calendar' | 'users' | 'roles' | 'leads';
+type AdminView = 'hotels' | 'roomTypes' | 'rooms' | 'calendar' | 'users' | 'roles' | 'dmc';
 
 const AdminLayout: React.FC = () => {
   const [currentView, setCurrentView] = useState<AdminView>('hotels');
@@ -28,8 +28,8 @@ const AdminLayout: React.FC = () => {
       setCurrentView('users');
     } else if (section === 'roles') {
       setCurrentView('roles');
-    } else if (section === 'leads') {
-      setCurrentView('leads');
+    } else if (section === 'dmc') {
+      setCurrentView('dmc');
     }
   };
 
@@ -47,8 +47,8 @@ const AdminLayout: React.FC = () => {
         return hasRole('admin') || hasRole('staff') || hasRole('viewer') ? <UserManagement /> : <HotelManagement />;
       case 'roles':
         return hasRole('ADMIN') ? <RoleManagement /> : <HotelManagement />;
-      case 'leads':
-        return hasRole('ADMIN') ? <LeadsManagement /> : <HotelManagement />;
+      case 'dmc':
+        return hasRole('ADMIN') ? <DMCManagement /> : <HotelManagement />;
       default:
         return <HotelManagement />;
     }
@@ -103,10 +103,10 @@ const AdminLayout: React.FC = () => {
               )}
               {hasRole('ADMIN') && (
                 <Button
-                  variant={currentView === 'leads' ? 'default' : 'outline'}
-                  onClick={() => setCurrentView('leads')}
+                  variant={currentView === 'dmc' ? 'default' : 'outline'}
+                  onClick={() => setCurrentView('dmc')}
                 >
-                  Leads
+                  DMC
                 </Button>
               )}
               <Button 
